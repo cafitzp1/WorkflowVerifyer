@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,18 @@ namespace WorkflowVerifyer.App.Helpers
 {
     internal struct ArgumentExtraction
     {
+        private static Dictionary<String, Object> InitializeArguments()
+        {
+            Dictionary<String, Object> l_ArgValuePairs = new Dictionary<String, Object>();
+            List<String> UnrecognizedArgs = null;
+
+            l_ArgValuePairs.Add(ArgumentKey.Unrecognized, UnrecognizedArgs);
+            l_ArgValuePairs.Add(ArgumentKey.TimeInterval, Convert.ToInt32(ConfigurationManager.AppSettings["TimeInterval"]));
+            l_ArgValuePairs.Add(ArgumentKey.Client, Convert.ToInt32(ConfigurationManager.AppSettings["Client"]));
+            l_ArgValuePairs.Add(ArgumentKey.Delay, Convert.ToInt32(ConfigurationManager.AppSettings["Delay"]));
+
+            return l_ArgValuePairs;
+        }
         public static Dictionary<String, Object> ExtractArgValuePairs(String[] a_Args)
         {
             Dictionary<String, Object> l_ArgValuePairs = InitializeArguments();
@@ -30,18 +43,6 @@ namespace WorkflowVerifyer.App.Helpers
                     (l_ArgValuePairs[ArgumentKey.Unrecognized] as List<String>).Add(l_ExtractedArgValuePair.Key);
                 }
             }
-
-            return l_ArgValuePairs;
-        }
-        private static Dictionary<String, Object> InitializeArguments()
-        {
-            Dictionary<String, Object> l_ArgValuePairs = new Dictionary<String, Object>();
-            List<String> UnrecognizedArgs = null;
-
-            l_ArgValuePairs.Add(ArgumentKey.Unrecognized, UnrecognizedArgs);
-            l_ArgValuePairs.Add(ArgumentKey.TimeInterval, 0);
-            l_ArgValuePairs.Add(ArgumentKey.Client, 0);
-            l_ArgValuePairs.Add(ArgumentKey.Delay, 0);
 
             return l_ArgValuePairs;
         }
