@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2003
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowVerifyernnn", "WorkflowVerifyer\WorkflowVerifyernnn.csproj", "{CEACD05C-DE77-487A-AD70-51F397D79530}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Verifyer", "Verifyer\Verifyer.csproj", "{06C88733-9396-4228-8065-134A1E38729B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CEACD05C-DE77-487A-AD70-51F397D79530}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEACD05C-DE77-487A-AD70-51F397D79530}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEACD05C-DE77-487A-AD70-51F397D79530}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEACD05C-DE77-487A-AD70-51F397D79530}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06C88733-9396-4228-8065-134A1E38729B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06C88733-9396-4228-8065-134A1E38729B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06C88733-9396-4228-8065-134A1E38729B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06C88733-9396-4228-8065-134A1E38729B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E1AADD4E-E060-4157-932E-4CF26FDB6088}
+	EndGlobalSection
+EndGlobal

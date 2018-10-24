@@ -1,0 +1,12 @@
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.dll.config
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.deps.json
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.runtimeconfig.json
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.runtimeconfig.dev.json
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.dll
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.pdb
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/Debug/netcoreapp2.1/WorkflowVerifyer.App.csprojAssemblyReference.cache
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/Debug/netcoreapp2.1/WorkflowVerifyer.App.csproj.CoreCompileInputs.cache
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/Debug/netcoreapp2.1/WorkflowVerifyer.App.AssemblyInfoInputs.cache
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/Debug/netcoreapp2.1/WorkflowVerifyer.App.AssemblyInfo.cs
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/Debug/netcoreapp2.1/WorkflowVerifyer.App.dll
+/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/Debug/netcoreapp2.1/WorkflowVerifyer.App.pdb

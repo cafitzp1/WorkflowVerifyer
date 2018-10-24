@@ -1,0 +1,6 @@
+# misc
+.vscode
+.DS_Store
+
+# data
+WorkflowVerifyer.App/App.config
