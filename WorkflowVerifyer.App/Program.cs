@@ -25,17 +25,6 @@ namespace WorkflowVerifyer.App
             if (!ArgumentExtraction.ValidateArgs(l_ProcessData[1] as Dictionary<String, Object>)) return;
 
             // args valid, begin operation
-            foreach (KeyValuePair<String, Object> entry in l_ProcessData[1] as Dictionary<String, Object>)
-            {
-                if (entry.Key == "unrecognized")
-                {
-                    Console.WriteLine();
-                }
-                else
-                {
-                    Console.WriteLine($"{entry.Key}={entry.Value}");
-                }
-            }
             l_Delay = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.Delay]);
             l_TimeInterval = Convert.ToInt64((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.TimeInterval]);
 

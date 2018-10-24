@@ -9,13 +9,13 @@ namespace WorkflowVerifyer.App.Helpers
 {
     internal class VerificationLogger
     {
-        private string m_LogString;
-        private string m_ErrorEmailBody;
-        private string m_AwsFileDir;
-        private string m_LocalFileDir;
-        private DateTime? m_LogDateTime;
-        private List<String> m_ErrorEmailAttachments;
-        private List<String> m_ErrorEmailToAddresses;
+        // private string m_LogString;
+        // private string m_ErrorEmailBody;
+        // private string m_AwsFileDir;
+        // private string m_LocalFileDir;
+        // private DateTime? m_LogDateTime;
+        // private List<String> m_ErrorEmailAttachments;
+        // private List<String> m_ErrorEmailToAddresses;
 
         // public IntegrationLogger(string a_AwsS3Path, DateTime? a_LogDateTime, string a_LocalFileDir)
         // {
