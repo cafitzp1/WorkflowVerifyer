@@ -7,21 +7,21 @@
 /Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.AssemblyInfo.cs
 /Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.dll
 /Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.pdb
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.deps.json
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.dll
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.pdb
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.csprojAssemblyReference.cache
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.csproj.CoreCompileInputs.cache
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.AssemblyInfoInputs.cache
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.AssemblyInfo.cs
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.dll
-\\Mac\iCloud\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.pdb
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.deps.json
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.dll
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.pdb
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.csprojAssemblyReference.cache
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.csproj.CoreCompileInputs.cache
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.AssemblyInfoInputs.cache
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.AssemblyInfo.cs
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.dll
-X:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.pdb
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/bin/Debug/netstandard2.0/WorkflowVerifyer.Core.deps.json
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/bin/Debug/netstandard2.0/WorkflowVerifyer.Core.dll
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/bin/Debug/netstandard2.0/WorkflowVerifyer.Core.pdb
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.csprojAssemblyReference.cache
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.csproj.CoreCompileInputs.cache
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.AssemblyInfoInputs.cache
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.AssemblyInfo.cs
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.dll
+//Mac/iCloud/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.pdb
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/bin/Debug/netstandard2.0/WorkflowVerifyer.Core.deps.json
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/bin/Debug/netstandard2.0/WorkflowVerifyer.Core.dll
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/bin/Debug/netstandard2.0/WorkflowVerifyer.Core.pdb
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.csprojAssemblyReference.cache
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.csproj.CoreCompileInputs.cache
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.AssemblyInfoInputs.cache
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.AssemblyInfo.cs
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.dll
+X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.pdb
