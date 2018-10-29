@@ -2094,10 +2094,11 @@
       ]
     },
     "System.ComponentModel/4.0.1": {
-      "sha512": "oBZFnm7seFiVfugsIyOvQCWobNZs7FzqDV/B7tx20Ep/l3UUFCPDkdTnCNaJZTU27zjeODmy2C/cP60u3D4c9w==",
+      "sha512": "3AOvy/bB7s8yAkolZOlqGeLDrPySuYsgkk7hKIBWn5a/Le7V16PDYQIzj7w7hi4UUXXmEmN/ZehNlAi5eD9r5w==",
       "type": "package",
       "path": "system.componentmodel/4.0.1",
       "files": [
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -3016,10 +3017,11 @@
       ]
     },
     "System.Net.Requests/4.0.11": {
-      "sha512": "vxGt7C0cZixN+VqoSW4Yakc1Y9WknmxauDqzxgpw/FnBdz4kQNN51l4wxdXX5VY1xjqy//+G+4CvJWp1+f+y6Q==",
+      "sha512": "qNQBFFZsSX63hK3TKVJsnBa9WWP8Nwyzo9iFFHBF49FAeGANGNxB6ECedbWVODbUUOdnhQpwC0Wd/WGw84pv8Q==",
       "type": "package",
       "path": "system.net.requests/4.0.11",
       "files": [
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -3097,10 +3099,11 @@
       ]
     },
     "System.Net.WebHeaderCollection/4.0.1": {
-      "sha512": "XX2TIAN+wBSAIV51BU2FvvXMdstUa8b0FBSZmDWjZdwUMmggQSifpTOZ5fNH20z9ZCg2fkV1L5SsZnpO2RQDRQ==",
+      "sha512": "uhHcCDWjrpuEM1BbMKk5NV6Ya7GCg9vO0udwG/ev9ZmJXMDhOgqVWVjyazEVMOKtl7Qbt8r/2Yo4o/xYb6lANQ==",
       "type": "package",
       "path": "system.net.webheadercollection/4.0.1",
       "files": [
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -4510,10 +4513,11 @@
       ]
     },
     "System.Threading.Thread/4.0.0": {
-      "sha512": "gIdJqDXlOr5W9zeqFErLw3dsOsiShSCYtF9SEHitACycmvNvY8odf9kiKvp6V7aibc8C4HzzNBkWXjyfn7plbQ==",
+      "sha512": "Tlo/QJ5w4UhgO7Abxz3k9LL/nfQ9/2ioc88cQIMOjNhzK1QGJvvH+A6w5Sx+u99D6lgR+1Nj1YZ9/lknR963kQ==",
       "type": "package",
       "path": "system.threading.thread/4.0.0",
       "files": [
+        ".signature.p7s",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
         "lib/MonoAndroid10/_._",
@@ -4564,37 +4568,35 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Connor\\.nuget\\packages\\": {},
-    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+    "/Users/Connor/.nuget/packages/": {},
+    "/usr/local/share/dotnet/sdk/NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "X:\\dev\\WorkflowVerifyer\\WorkflowVerifyer.App\\WorkflowVerifyer.App.csproj",
+      "projectUniqueName": "/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/WorkflowVerifyer.App.csproj",
       "projectName": "WorkflowVerifyer.App",
-      "projectPath": "X:\\dev\\WorkflowVerifyer\\WorkflowVerifyer.App\\WorkflowVerifyer.App.csproj",
-      "packagesPath": "C:\\Users\\Connor\\.nuget\\packages\\",
-      "outputPath": "X:\\dev\\WorkflowVerifyer\\WorkflowVerifyer.App\\obj\\",
+      "projectPath": "/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/WorkflowVerifyer.App.csproj",
+      "packagesPath": "/Users/Connor/.nuget/packages/",
+      "outputPath": "/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.App/obj/",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "C:\\Users\\Connor\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/Users/Connor/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp2.1"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "netcoreapp2.1": {
           "projectReferences": {
-            "X:\\dev\\WorkflowVerifyer\\WorkflowVerifyer.Core\\WorkflowVerifyer.Core.csproj": {
-              "projectPath": "X:\\dev\\WorkflowVerifyer\\WorkflowVerifyer.Core\\WorkflowVerifyer.Core.csproj"
+            "/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.Core/WorkflowVerifyer.Core.csproj": {
+              "projectPath": "/Users/Connor/Library/Mobile Documents/com~apple~CloudDocs/dev/WorkflowVerifyer/WorkflowVerifyer.Core/WorkflowVerifyer.Core.csproj"
             }
           }
         }
