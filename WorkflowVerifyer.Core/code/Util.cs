@@ -1,17 +1,4 @@
 using System;
-<<<<<<< HEAD
-using System.Configuration;
-using Amazon.S3;
-using Amazon.S3.Transfer;
-using Amazon.Runtime.CredentialManagement;
-
-namespace WorkflowVerifyer.App.Helpers
-{
-    internal class Util
-    {
-        
-        public static void LogToS3(String message)
-=======
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
@@ -59,28 +46,11 @@ namespace WorkflowVerifyer.Core
         /// <param name="a_ErrorMessage"></param>
         /// <returns>Returns true if uploaded properly, else false</returns>
         public static bool UploadAwsS3File(String a_BucketName, byte[] a_FileBytes, String a_FilePath, ref String a_ErrorMessage)
->>>>>>> dev
         {
             try
             {
                 using (TransferUtility l_FileTransferUtility = new TransferUtility(GetAwsS3Client()))
                 {
-<<<<<<< HEAD
-                    // ...
-                }
-            }
-            catch (AmazonS3Exception) {}
-            catch (Exception) {}
-        }
-
-        private static AmazonS3Client GetAwsS3Client()
-        {
-            // will read "AWSProfileName" from App.config and find stored access information from there
-            AmazonS3Client l_AmazonS3Client = new AmazonS3Client();
-
-            return l_AmazonS3Client;
-        }
-=======
                     l_FileTransferUtility.Upload(new MemoryStream(a_FileBytes), a_BucketName, a_FilePath.Replace(@"\", "/"));
                 }
             }
@@ -150,6 +120,5 @@ namespace WorkflowVerifyer.Core
             // return "http://" + a_BucketName + ".s3-website-us-east-1.amazonaws.com/" + a_FilePath;
             return $"http://{a_BucketName}.s3-website-{ConfigurationManager.AppSettings["AwsS3Region"]}.amazonaws.com/{a_FilePath}";
         }
->>>>>>> dev
     }
 }
