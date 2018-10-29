@@ -18,8 +18,7 @@ namespace WorkflowVerifyer.Core
     /// </summary>
     public class Util
     {
-        // section will have to be added to whichever config file uses this type
-        private static Amazon.RegionEndpoint AWS_S3_REGION = Amazon.RegionEndpoint.GetBySystemName(ConfigurationManager.AppSettings["AwsS3Region"]);
+        public static Amazon.RegionEndpoint AwsS3Region { get => Amazon.RegionEndpoint.GetBySystemName(ConfigurationManager.AppSettings["AwsS3Region"]); }
 
         /// <summary>
         /// Generates a random alphanumeric string a_Length characters long
@@ -106,7 +105,7 @@ namespace WorkflowVerifyer.Core
             String l_Region = ConfigurationManager.AppSettings["AwsS3Region"];
 
             AWSCredentials l_AWSCredentials = new BasicAWSCredentials(l_AccessKeyID, l_SecretAccessKey);
-            AmazonS3Client l_AmazonS3Client = new AmazonS3Client(l_AWSCredentials, AWS_S3_REGION);
+            AmazonS3Client l_AmazonS3Client = new AmazonS3Client(l_AWSCredentials, AwsS3Region);
 
             return l_AmazonS3Client;
         }
