@@ -1,7 +1,24 @@
-# misc
-.vscode
-.DS_Store
+# System Files
+**/.vscode
+**/.DS_Store
+**/._.DS_Store
+**/Thumbs.db
 
-# data
-WorkflowVerifyer.App/App.config
-WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.dll.config
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/WorkflowVerifyer.App/App.config
+/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.dll.config
+/.vs/
+**/bin/
+**/obj/
+**/App.config
+*.user
+*.suo
+*.sln.cache
+*.Publish.xml
