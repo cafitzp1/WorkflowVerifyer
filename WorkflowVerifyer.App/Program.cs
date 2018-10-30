@@ -18,16 +18,14 @@ namespace WorkflowVerifyer.App
         {
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
-            Int64 l_TimeInterval;
-            Int32 l_Delay;
             Dictionary<String, Object> l_ArgValuePairs = ArgumentExtraction.ExtractArgValuePairs(a_Args);
-            Object[] l_ProcessData = { DateTime.Now, ArgumentExtraction.ExtractArgValuePairs(a_Args) }; // TODO: log this to S3
+            Object[] l_ProcessData = { DateTime.Now, ArgumentExtraction.ExtractArgValuePairs(a_Args) };
 
+            // return if args are invalid
             if (!ArgumentExtraction.ValidateArgs(l_ProcessData[1] as Dictionary<String, Object>)) return;
 
-            // args valid, begin operation
-            l_Delay = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.Delay]);
-            l_TimeInterval = Convert.ToInt64((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.TimeInterval]);
+            Int32 l_Delay = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.Delay]);
+            Int64 l_TimeInterval = Convert.ToInt64((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.TimeInterval]);
 
             // sleep thread for delay specified
             if (l_Delay > 0)
@@ -44,52 +42,56 @@ namespace WorkflowVerifyer.App
                 SuccessfulVerifications = 0;
                 Spinner = new ConsoleSpinner(0, 0);
 
-                // TODO: get all verification records from db, store as DataTable (records will be dt, foreach will iterate rows in dt.rows
-                String[] l_Records = { "1", "2", "3", "4", "5" }; 
-                Thread.Sleep(1000); // to simiulate loading time for querying from db
-
-                // new parent task for each verification child task
-                Task l_Process = new Task(() =>
+                try
                 {
-                    // TODO: replace for with foreach to iterate over DataRow vars in DataTable Rows, allocate first index of l_data to current DataRow var
-                    for (int i = 0; i < l_Records.Length; i++)
+                    // TODO: get all verification records from db, store as DataTable (records will be dt, foreach will iterate rows in dt.rows
+                    String[] l_Records = { "1", "2", "3", "4", "5" };
+                    Thread.Sleep(1000); // to simiulate loading time for querying from db
+
+                    // new parent task for each verification child task
+                    Task l_Process = new Task(() =>
                     {
-                        Object[] l_ObjectData = { l_Records[i], DateTime.Now, l_TempDirPath };
+                        // TODO: replace for with foreach to iterate over DataRow vars in DataTable Rows, allocate first index of l_data to current DataRow var
+                        for (int i = 0; i < l_Records.Length; i++)
+                        {
+                            Object[] l_ObjectData = { l_Records[i], DateTime.Now, l_TempDirPath };
 
-                        // new task for each verification
-                        new Task(() => { if(Verify(l_ObjectData)) ++SuccessfulVerifications; }, TaskCreationOptions.AttachedToParent).Start();
+                            // new task for each verification
+                            new Task(() => { if (Verify(l_ObjectData)) ++SuccessfulVerifications; }, TaskCreationOptions.AttachedToParent).Start();
+                        }
+                    });
+
+                    // start parent task, wait for children to finish executing
+                    Spinner.Start();
+                    l_Process.Start();
+                    l_Process.Wait();
+
+                    // parent task finished, log results
+                    l_StopWatch.Stop();
+
+                    String l_ProcessResultsMessage = $"Process completed in {l_StopWatch.ElapsedMilliseconds}ms; {SuccessfulVerifications}/{l_Records.Length} verifications successful";
+                    if (l_TimeInterval > 0)
+                    {
+                        l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
+                        l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ? 0 : l_TimeIntervalMinusRunTime;
+                        l_ProcessResultsMessage += $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}";
                     }
-                });
+                    Spinner.Stop(l_ProcessResultsMessage);
 
-                // start parent task, wait for children to finish executing
-                Spinner.Start();
-                l_Process.Start();
-                l_Process.Wait();
-
-                // parent task finished, log results
-                l_StopWatch.Stop();
-
-                String l_ProcessResultsMessage = $"Process completed in {l_StopWatch.ElapsedMilliseconds}ms; {SuccessfulVerifications}/{l_Records.Length} verifications successful";
-                if (l_TimeInterval > 0)
-                {
-                    l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
-                    l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ? 0 : l_TimeIntervalMinusRunTime;
-                    l_ProcessResultsMessage += $" ... Next run in {l_TimeIntervalMinusRunTime}ms";
+                    // sleep thread for the fixed time interval
+                    Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
                 }
-                Spinner.Stop(l_ProcessResultsMessage);
-
-                // sleep thread for the fixed time interval
-                Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
+                catch (Exception) { }
 
             } while (l_TimeInterval > 0);
         }
-        
+
         private static Boolean Verify(Object[] a_ObjectData)
         {
             String a_ClientID = a_ObjectData[0] as String;
             Nullable<DateTime> a_RunTime = a_ObjectData[1] as Nullable<DateTime>;
             String a_TempDirPath = a_ObjectData[2] as String;
-            
+
             Verification l_VerificationResult = new Verification(a_ClientID);
             Stopwatch l_StopWatch = new Stopwatch();
             Boolean l_RunSuccess = true;
@@ -117,39 +119,13 @@ namespace WorkflowVerifyer.App
 
                 l_Logger.AddEntry("Unknown", false, "Unknown error occurred during workflow verification for client '" + l_VerificationResult.ClientID + "'.", e);
                 l_Logger.Save();
-
-                LogError(e);
             }
             finally
             {
-                l_VerificationResult.ElapsedTime=l_StopWatch.ElapsedMilliseconds;
-                // m_Spinner.Stop($"{l_VerificationResult}");
-                // m_Spinner = new ConsoleSpinner(0, 0);
-                // m_Spinner.Start();
+                l_VerificationResult.ElapsedTime = l_StopWatch.ElapsedMilliseconds;
             }
 
             return l_RunSuccess;
-        }
-        public static void LogError(Exception e)
-        {
-            DateTime timeOfError = DateTime.Now;
-            String errorMessage = $@"
-                ERROR: Occurred at {timeOfError}
-                Exception: {e.Message}
-                Trace: {e.StackTrace}
-            ";
-
-            //VerificationLogger.LogToS3(errorMessage);
-        }
-        public static void LogError(String message)
-        {
-            DateTime timeOfError = DateTime.Now;
-            String errorMessage = $@"
-                ERROR: Occurred at {timeOfError}
-                Message: {message}
-            ";
-
-            //VerificationLogger.LogToS3(errorMessage);
         }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
@@ -159,8 +135,6 @@ namespace WorkflowVerifyer.App
             l_Logger.AddEntry("Unknown", false, "Unknown Error Occurred.", (Exception)e.ExceptionObject);
             l_Logger.Save();
             Environment.Exit(1);
-
-            //VerificationLogger.LogToS3(errorMessage);
         }
     }
 }
