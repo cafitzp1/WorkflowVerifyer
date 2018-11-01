@@ -25,3 +25,12 @@ X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowV
 X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.AssemblyInfo.cs
 X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.dll
 X:/dev/WorkflowVerifyer/WorkflowVerifyer.Core/obj/Debug/netstandard2.0/WorkflowVerifyer.Core.pdb
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.deps.json
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.dll
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\bin\Debug\netstandard2.0\WorkflowVerifyer.Core.pdb
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.csprojAssemblyReference.cache
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.csproj.CoreCompileInputs.cache
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.AssemblyInfoInputs.cache
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.AssemblyInfo.cs
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.dll
+Y:\dev\WorkflowVerifyer\WorkflowVerifyer.Core\obj\Debug\netstandard2.0\WorkflowVerifyer.Core.pdb
