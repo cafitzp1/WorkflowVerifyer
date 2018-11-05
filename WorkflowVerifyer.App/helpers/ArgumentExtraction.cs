@@ -12,35 +12,35 @@ namespace WorkflowVerifyer.App.Helpers
     {
         private static Dictionary<String, Object> InitializeArguments()
         {
-            Dictionary<String, Object> l_ArgValuePairs = new Dictionary<String, Object>();
+            Dictionary<String, Object> l_ArgValuePairs = new Dictionary<String, Object>(StringComparer.OrdinalIgnoreCase);
             List<String> UnrecognizedArgs = null;
 
-            l_ArgValuePairs.Add(ArgumentKey.Unrecognized, UnrecognizedArgs);
-            l_ArgValuePairs.Add(ArgumentKey.TimeInterval, Convert.ToInt32(ConfigurationManager.AppSettings["TimeInterval"]));
-            l_ArgValuePairs.Add(ArgumentKey.Client, Convert.ToInt32(ConfigurationManager.AppSettings["Client"]));
-            l_ArgValuePairs.Add(ArgumentKey.Delay, Convert.ToInt32(ConfigurationManager.AppSettings["Delay"]));
+            l_ArgValuePairs.Add(nameof(ArgumentKey.Unrecognized), UnrecognizedArgs);
+            l_ArgValuePairs.Add(nameof(ArgumentKey.TimeInterval), Convert.ToInt32(ConfigurationManager.AppSettings["TimeInterval"]));
+            l_ArgValuePairs.Add(nameof(ArgumentKey.Client), Convert.ToInt32(ConfigurationManager.AppSettings["Client"]));
+            l_ArgValuePairs.Add(nameof(ArgumentKey.Delay), Convert.ToInt32(ConfigurationManager.AppSettings["Delay"]));
+            l_ArgValuePairs.Add(nameof(ArgumentKey.LogToS3), Convert.ToInt32(ConfigurationManager.AppSettings["LogToS3"]));
 
             return l_ArgValuePairs;
         }
         public static Dictionary<String, Object> ExtractArgValuePairs(String[] a_Args)
         {
             Dictionary<String, Object> l_ArgValuePairs = InitializeArguments();
-            l_ArgValuePairs[ArgumentKey.Unrecognized] = new List<String>();
+            l_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] = new List<String>();
 
             // extract args
             for(int i = 0; i < a_Args.Length; i++)
             {
                 KeyValuePair<String, String> l_ExtractedArgValuePair = ExtractArg(a_Args[i]);
-                String l_ExtractedArgKeyToLower = l_ExtractedArgValuePair.Key.ToLower();
 
-                if(l_ArgValuePairs.ContainsKey(l_ExtractedArgKeyToLower))
+                if(l_ArgValuePairs.ContainsKey(l_ExtractedArgValuePair.Key))
                 {
                     // change value for the arg already in the dictionary
-                    l_ArgValuePairs[l_ExtractedArgKeyToLower] = l_ExtractedArgValuePair.Value;
+                    l_ArgValuePairs[l_ExtractedArgValuePair.Key] = l_ExtractedArgValuePair.Value;
                 }
                 else // if the key wasn't there, arg was unrecognized; add entire arg to unreconized list of strings
                 {
-                    (l_ArgValuePairs[ArgumentKey.Unrecognized] as List<String>).Add(l_ExtractedArgValuePair.Key);
+                    (l_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] as List<String>).Add(l_ExtractedArgValuePair.Key);
                 }
             }
 
@@ -77,7 +77,7 @@ namespace WorkflowVerifyer.App.Helpers
         public static Boolean ValidateArgs(Dictionary<String, Object> a_ArgValuePairs)
         {
             // return if there are any unrecognized args
-            List<String> l_UnrecognizedArgsList = (a_ArgValuePairs[ArgumentKey.Unrecognized] as List<String>);
+            List<String> l_UnrecognizedArgsList = (a_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] as List<String>);
             if (l_UnrecognizedArgsList != null && l_UnrecognizedArgsList.Count>0)
             {
                 Console.WriteLine($"The following argument(s) provided were invalid:");
@@ -93,7 +93,7 @@ namespace WorkflowVerifyer.App.Helpers
             // return if any values provided for args are invalid
             foreach(KeyValuePair<String, Object> entry in a_ArgValuePairs)
             {
-                if (entry.Key == ArgumentKey.Unrecognized) continue;
+                if (entry.Key == nameof(ArgumentKey.Unrecognized)) continue;
 
                 // no longer a list of unrecognized args to worry about; convert item to just <string, string> 
                 KeyValuePair<String, String> l_ArgValuePair = new KeyValuePair<string, string>(entry.Key, entry.Value.ToString());
@@ -118,84 +118,107 @@ namespace WorkflowVerifyer.App.Helpers
         public static Boolean ValidateArg(KeyValuePair<String, String> a_Arg)
         {
             // route to method handler
-            if (a_Arg.Key == ArgumentKey.TimeInterval)
+            switch (a_Arg.Key)
             {
-                if (!ValidateTimeIntervalArg(a_Arg.Value)) return false;
-            }
-            else if (a_Arg.Key == ArgumentKey.Client)
-            {
-                if (!ValidateClientArg(a_Arg.Value)) return false;
-            }
-            else if (a_Arg.Key == ArgumentKey.Delay)
-            {
-                if (!ValidateDelayArg(a_Arg.Value)) return false;
+                case nameof(ArgumentKey.TimeInterval):
+                    return (ValidateTimeIntervalArg(a_Arg.Value)) ? true : false;
+                case nameof(ArgumentKey.Client):
+                    return (ValidateClientArg(a_Arg.Value)) ? true : false;
+                case nameof(ArgumentKey.Delay):
+                    return (ValidateDelayArg(a_Arg.Value)) ? true : false;
+                case nameof(ArgumentKey.LogToS3):
+                    return (ValidateLogToS3Arg(a_Arg.Value)) ? true : false;
             }
 
-            return true;
+            throw new Exception("Argument key not recognized in ValidateArg method");
         }
-        private static Boolean ValidateTimeIntervalArg(String a_Arg)
+        private static Boolean ValidateTimeIntervalArg(String a_ArgValue)
         {
             // ensure only digits were provided
-            if (IsDigitsOnly(a_Arg))
+            if (IsDigitsOnly(a_ArgValue))
             {
-                Int32 l_ArgAsInt32 = Convert.ToInt32(a_Arg);
+                Int32 l_ArgAsInt32 = Convert.ToInt32(a_ArgValue);
 
                 // TODO: replace 1000 with 1hr (3600000) // ensure arg is ok as time in ms (between 1 hr and 1 week); default is 0, this if fine
-                if ((l_ArgAsInt32 < 1000 || l_ArgAsInt32 > 604800000) && l_ArgAsInt32 != 0)
-                {
-                    return false;
-                }
-
-                // assume time is acceptable if not yet returned
-                return true;
+                return ((l_ArgAsInt32 < 1000 || l_ArgAsInt32 > 604800000) && l_ArgAsInt32 != 0) ?
+                    false :
+                    true;
             }
 
             return false;
         }
-        private static Boolean ValidateClientArg(String a_Arg)
+        private static Boolean ValidateClientArg(String a_ArgValue)
         {
-            if (IsDigitsOnly(a_Arg))
+            return (IsDigitsOrCommasOnly(a_ArgValue)) ? true : false;
+        }
+        public static List<Int32> ReturnClients(String a_ArgValue)
+        {
+            List<Int32> l_Clients = new List<Int32>();
+            String l_CurrentID = String.Empty;
+
+            for(int i = 0; i < a_ArgValue.Length; i++)
             {
-                Int32 l_ArgAsInt32 = Convert.ToInt32(a_Arg);
+                if(a_ArgValue[i] != ',')
+                    l_CurrentID += a_ArgValue[i];
 
-                // FIXME: set real available clientIDs here like so (query active clients from DB) - remember to include 0
-                Int32[] l_ClientIDs = { 0, 7, 36 };
-
-                if (!l_ClientIDs.Contains(l_ArgAsInt32))
+                else if (l_CurrentID.Length > 0)
                 {
-                    return false;
+                    l_Clients.Add(Convert.ToInt32(l_CurrentID));
+                    l_CurrentID = String.Empty;
                 }
-
-                return true;
             }
 
-            return false;
+            if(l_CurrentID.Length>0)
+                l_Clients.Add(Convert.ToInt32(l_CurrentID));
+
+            return l_Clients;
         }
-        private static Boolean ValidateDelayArg(String a_Arg)
+        private static Boolean ValidateDelayArg(String a_ArgValue)
         {
-            if (IsDigitsOnly(a_Arg))
+            if (IsDigitsOnly(a_ArgValue))
             {
-                Int32 l_ArgAsInt32 = Convert.ToInt32(a_Arg);
+                Int32 l_ArgAsInt32 = Convert.ToInt32(a_ArgValue);
 
                 // arg is ok as time between 1 ms 1 week)
-                if (l_ArgAsInt32 < 0 || l_ArgAsInt32 > 604800000)
-                {
-                    return false;
-                }
-
-                return true;
+                return (l_ArgAsInt32 < 0 || l_ArgAsInt32 > 604800000) ?
+                    false :
+                    true;
             }
 
             return false;
         }
-        private static Boolean IsDigitsOnly(String a_Arg)
+        private static Boolean ValidateLogToS3Arg(String a_ArgValue)
+        {
+            if (IsDigitsOnly(a_ArgValue))
+            {
+                Int32 l_ArgAsInt32 = Convert.ToInt32(a_ArgValue);
+
+                // arg is ok as 0 or 1)
+                return (l_ArgAsInt32 == 0 || l_ArgAsInt32 == 1) ? true : false;
+            }
+
+            return false;
+        }
+        private static Boolean IsDigitsOnly(String a_ArgValue)
         {
             // no digits should return false
-            if(a_Arg.Length==0) return false;
+            if(a_ArgValue.Length==0) return false;
 
-            foreach (char c in a_Arg)
+            foreach (char c in a_ArgValue)
             {
                 if (c < '0' || c > '9')
+                    return false;
+            }
+            return true;
+        }
+        private static Boolean IsDigitsOrCommasOnly(String a_ArgValue)
+        {
+            // no digits should return false
+            if(a_ArgValue.Length==0) return false;
+
+            foreach (char c in a_ArgValue)
+            {
+                if ((c < '0' || c > '9') && c!=',')
                     return false;
             }
             return true;

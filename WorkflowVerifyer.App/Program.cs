@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define Debug
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -24,11 +25,34 @@ namespace WorkflowVerifyer.App
             Object[] l_ProcessData = { DateTime.Now, ArgumentExtraction.ExtractArgValuePairs(a_Args) };
 
             // return if args are invalid
-            if (!ArgumentExtraction.ValidateArgs(l_ProcessData[1] as Dictionary<String, Object>)) 
+            if (!ArgumentExtraction.ValidateArgs(l_ProcessData[1] as Dictionary<String, Object>))
                 return;
 
-            Int32 l_Delay = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.Delay]);
-            Int64 l_TimeInterval = Convert.ToInt64((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.TimeInterval]);
+            // pull values from arguments
+            Int64 l_TimeInterval = Convert.ToInt64((l_ProcessData[1] as Dictionary<String, Object>)[nameof(ArgumentKey.TimeInterval)]);
+            String l_ClientArgumentString = ( (l_ProcessData[1] as Dictionary<String, Object>)[nameof(ArgumentKey.Client)] ).ToString();
+            List<Int32> l_Clients = ArgumentExtraction.ReturnClients(l_ClientArgumentString);
+            Int32 l_Delay = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[nameof(ArgumentKey.Delay)]);
+            Int32 l_LogToS3 = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[nameof(ArgumentKey.LogToS3)]);
+
+            #if(Debug)
+
+            String logInfo = 
+                $"TimeInterval: {l_TimeInterval}\n" +
+                $"Client: {l_ClientArgumentString}\n" +
+                $"Delay: {l_Delay}\n" +
+                $"LogToS3: {l_LogToS3}";
+            Console.WriteLine(logInfo);
+
+            String clientInfo = "Clients Extracted: ";
+            foreach(Int32 clientID in l_Clients)
+            {
+                clientInfo += clientID + ", ";
+            }
+            clientInfo = clientInfo.TrimEnd(',', ' ');
+            Console.WriteLine(clientInfo);
+
+            #endif
 
             // sleep thread for delay specified
             if (l_Delay > 0)
@@ -42,43 +66,53 @@ namespace WorkflowVerifyer.App
                 Int64 l_TimeIntervalMinusRunTime = 0;
                 Stopwatch l_StopWatch = Stopwatch.StartNew();
                 String l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
+                Boolean l_LogToConsole = false;
                 if (!Directory.Exists(l_TempDirPath)) Directory.CreateDirectory(l_TempDirPath);
                 SuccessfulVerifications = 0;
                 Spinner = new ConsoleSpinner(0, 0);
 
                 try
                 {
-                    // get all verification records from db, store as DataTable
-                    DataTable l_WfvRecords = Verification.GetAll(true);
-
-                    // new parent task for each verification child task
-                    Task l_Process = new Task(() =>
+                    // no need to deal with threading if we are only working with a single client non continuous
+                    if (l_Clients.Count == 1 && l_TimeInterval == 0)
                     {
-                        foreach (DataRow l_Row in l_WfvRecords.Rows)
-                        {
-                            Object[] l_ObjectData = { l_Row, DateTime.Now, l_TempDirPath };
- 
-                            // new task for each verification
-                            new Task(() => { if (Verify(l_ObjectData)) ++SuccessfulVerifications; }, TaskCreationOptions.AttachedToParent).Start();   
-                        }
-                    });
+                        Object[] l_ObjectData = { l_Clients[0], DateTime.Now, l_TempDirPath, l_LogToConsole };
 
-                    // start parent task, wait for children to finish executing
-                    Spinner.Start();
-                    l_Process.Start();
-                    l_Process.Wait();
-
-                    // parent task finished, log results
-                    l_StopWatch.Stop();
-
-                    String l_ProcessResultsMessage = $"Process completed in {l_StopWatch.ElapsedMilliseconds}ms; {SuccessfulVerifications}/{l_WfvRecords.Rows.Count} verifications successful";
-                    if (l_TimeInterval > 0)
-                    {
-                        l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
-                        l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ? 0 : l_TimeIntervalMinusRunTime;
-                        l_ProcessResultsMessage += $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}";
+                        Spinner.Start();
+                        //...
+                        l_StopWatch.Stop();
                     }
-                    Spinner.Stop(l_ProcessResultsMessage);
+                    else
+                    {
+                        // new parent task for each verification child task
+                        Task l_Process = new Task(() =>
+                        {
+                            foreach (Int32 l_ClientID in l_Clients)
+                            {
+                                Object[] l_ObjectData = { l_ClientID, DateTime.Now, l_TempDirPath, l_LogToConsole };
+
+                            // new task for each verification
+                            new Task(() => { if (Verify(l_ObjectData)) ++SuccessfulVerifications; }, TaskCreationOptions.AttachedToParent).Start();
+                            }
+                        });
+
+                        // start parent task, wait for children to finish executing
+                        Spinner.Start();
+                        l_Process.Start();
+                        l_Process.Wait();
+
+                        // parent task finished, log results
+                        l_StopWatch.Stop();
+
+                        String l_ProcessResultsMessage = $"Process completed in {l_StopWatch.ElapsedMilliseconds}ms; {SuccessfulVerifications}/{l_Clients.Count} verifications successful";
+                        if (l_TimeInterval > 0)
+                        {
+                            l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
+                            l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ? 0 : l_TimeIntervalMinusRunTime;
+                            l_ProcessResultsMessage += $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}";
+                        }
+                        Spinner.Stop(l_ProcessResultsMessage);
+                    }
 
                     // sleep thread for the fixed time interval
                     Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));

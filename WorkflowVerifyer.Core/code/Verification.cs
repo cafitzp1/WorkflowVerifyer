@@ -24,6 +24,27 @@ namespace WorkflowVerifyer.Core
             RunSuccess = false;
             ElapsedTime = 0;
         }
+        public List<ItemModification> AppendAssignments()
+        {
+            List<ItemModification> l_ItemModifications = new List<ItemModification>();
+
+            // get workflow items for this client AFTER a certain time
+            // ...
+
+            // loop through each item group and append data listed for any
+            // ...
+
+            // write changes to db
+            // ...
+
+            // save the list of modifications
+            // ...
+
+            // return the list of modifications
+            // ...
+
+            return l_ItemModifications;
+        }
         public static DataTable GetAll(Boolean a_ActiveOnly)
         {
             DataTable l_results = new DataTable();
