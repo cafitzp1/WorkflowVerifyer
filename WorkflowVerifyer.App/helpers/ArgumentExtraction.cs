@@ -74,7 +74,7 @@ namespace WorkflowVerifyer.App.Helpers
 
             return l_ArgValPair;
         }
-        public static Boolean ValidateArgs(Dictionary<String, Object> a_ArgValuePairs)
+        public static void ValidateArgs(Dictionary<String, Object> a_ArgValuePairs)
         {
             // return if there are any unrecognized args
             List<String> l_UnrecognizedArgsList = (a_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] as List<String>);
@@ -87,7 +87,7 @@ namespace WorkflowVerifyer.App.Helpers
                     Console.WriteLine($"\t{l_UnrecognizedArgsList[i]}");
                 }
 
-                return false;
+                Environment.Exit(1);
             }
 
             // return if any values provided for args are invalid
@@ -109,11 +109,9 @@ namespace WorkflowVerifyer.App.Helpers
                         Console.WriteLine($"Value of '{l_ArgValuePair.Value}' specified for '{l_ArgValuePair.Key}' argument was invalid");
                     }
 
-                    return false;
+                    Environment.Exit(1);
                 }
             }
-
-            return true;
         }
         public static Boolean ValidateArg(KeyValuePair<String, String> a_Arg)
         {
@@ -170,6 +168,12 @@ namespace WorkflowVerifyer.App.Helpers
 
             if(l_CurrentID.Length>0)
                 l_Clients.Add(Convert.ToInt32(l_CurrentID));
+
+            if(l_Clients.Count == 0 || l_Clients[0] == 0)
+            {
+                Console.WriteLine($"No client(s) specified");
+                Environment.Exit(1);
+            }
 
             return l_Clients;
         }

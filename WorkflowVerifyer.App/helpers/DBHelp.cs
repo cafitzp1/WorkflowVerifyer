@@ -2,7 +2,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace WorkflowVerifyer.Core
+namespace WorkflowVerifyer.App.Helpers
 {
     public class DBHelp
     {

@@ -14,8 +14,8 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- <ItemGroup>
     <ProjectReference Include="..\WorkflowVerifyer.Core\WorkflowVerifyer.Core.csproj" />
-  </ItemGroup>
+  </ItemGroup> -->
 
 </Project>

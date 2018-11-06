@@ -11,11 +11,8 @@ using Amazon.S3.Transfer;
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 
-namespace WorkflowVerifyer.Core
+namespace WorkflowVerifyer.App.Helpers
 {
-    /// <summary>
-    /// A stateless class that provides utility methods to be used across a project
-    /// </summary>
     public class Util
     {
         public static Amazon.RegionEndpoint AwsS3Region { get => Amazon.RegionEndpoint.GetBySystemName(ConfigurationManager.AppSettings["AwsS3Region"]); }

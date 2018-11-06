@@ -5,7 +5,6 @@ using System.IO;
 using Amazon.S3;
 using Amazon.S3.Transfer;
 using Amazon.Runtime.CredentialManagement;
-using WorkflowVerifyer.Core;
 
 namespace WorkflowVerifyer.App.Helpers
 {

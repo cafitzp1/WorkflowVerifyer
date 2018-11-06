@@ -1,7 +1,6 @@
 using System;
-using WorkflowVerifyer.Core;
 
-namespace WorkflowVerifyer.Core
+namespace WorkflowVerifyer.App.Helpers
 {
     /// <summary>
     /// A class for returning error metadata

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WorkflowVerifyer.Core
+namespace WorkflowVerifyer.App.Helpers
 {
     public class Verification
     {
@@ -24,7 +24,7 @@ namespace WorkflowVerifyer.Core
             RunSuccess = false;
             ElapsedTime = 0;
         }
-        public List<ItemModification> AppendAssignments()
+        public void AppendAssignments()
         {
             List<ItemModification> l_ItemModifications = new List<ItemModification>();
 
@@ -43,7 +43,12 @@ namespace WorkflowVerifyer.Core
             // return the list of modifications
             // ...
 
-            return l_ItemModifications;
+            System.Threading.Thread.Sleep(500);
+
+            this.ItemsModified.Add(new ItemModification(this.ClientID, "2123123", "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
+            this.ItemsModified.Add(new ItemModification(this.ClientID, "2234234", "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
+            this.ItemsModified.Add(new ItemModification(this.ClientID, "2345345", "Analyst: Unassigned", "Analyst: Someone Else"));
+            this.ItemsModified.Add(new ItemModification(this.ClientID, "2456456", "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
         }
         public static DataTable GetAll(Boolean a_ActiveOnly)
         {
