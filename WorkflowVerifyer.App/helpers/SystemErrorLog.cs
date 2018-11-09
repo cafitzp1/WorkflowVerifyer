@@ -1,11 +1,7 @@
 using System;
-using WorkflowVerifyer.Core;
 
-namespace WorkflowVerifyer.Core
+namespace WorkflowVerifyer.App.Helpers
 {
-    /// <summary>
-    /// A class for returning error metadata
-    /// </summary>
     public class SystemErrorLog
     {
         public Nullable<Int32> SystemErrorLogID { get; private set; }

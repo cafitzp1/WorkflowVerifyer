@@ -11,11 +11,8 @@ using Amazon.S3.Transfer;
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 
-namespace WorkflowVerifyer.Core
+namespace WorkflowVerifyer.App.Helpers
 {
-    /// <summary>
-    /// A stateless class that provides utility methods to be used across a project
-    /// </summary>
     public class Util
     {
         public static Amazon.RegionEndpoint AwsS3Region { get => Amazon.RegionEndpoint.GetBySystemName(ConfigurationManager.AppSettings["AwsS3Region"]); }
@@ -73,9 +70,9 @@ namespace WorkflowVerifyer.Core
         /// </summary>
         /// <param name="a_BucketName"></param>
         /// <param name="a_FilePath"></param>
-        public static byte[] GetAwsS3FileBytes(String a_BucketName, String a_FilePath)
+        public static Byte[] GetAwsS3FileBytes(String a_BucketName, String a_FilePath)
         {
-            byte[] l_FileBytes = null;
+            Byte[] l_FileBytes = null;
             try
             {
                 using (TransferUtility l_FileTransferUtility = new TransferUtility(GetAwsS3Client()))
@@ -115,7 +112,7 @@ namespace WorkflowVerifyer.Core
         /// </summary>
         /// <param name="a_BucketName"></param>
         /// <param name="a_FilePath"></param>
-        public static String GetAwsS3FilePublicUrl(object a_BucketName, object a_FilePath)
+        public static String GetAwsS3FilePublicUrl(Object a_BucketName, Object a_FilePath)
         {
             // return "http://" + a_BucketName + ".s3-website-us-east-1.amazonaws.com/" + a_FilePath;
             return $"http://{a_BucketName}.s3-website-{ConfigurationManager.AppSettings["AwsS3Region"]}.amazonaws.com/{a_FilePath}";

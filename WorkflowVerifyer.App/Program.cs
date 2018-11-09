@@ -1,33 +1,55 @@
-﻿using System;
+﻿#define Debug
+#undef Debug
+#define Log
+#undef Log
+using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Diagnostics;
 using WorkflowVerifyer.App.Helpers;
-using WorkflowVerifyer.Core;
 
 namespace WorkflowVerifyer.App
 {
     internal class Program
     {
-        private static volatile Int32 SuccessfulVerifications;
-        private static volatile ConsoleSpinner Spinner;
+        private static volatile List<WorkflowVerification> m_Verifications;
+        private static Boolean m_LogToS3;
 
         private static void Main(String[] a_Args)
         {
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
-            Int64 l_TimeInterval;
-            Int32 l_Delay;
             Dictionary<String, Object> l_ArgValuePairs = ArgumentExtraction.ExtractArgValuePairs(a_Args);
-            Object[] l_ProcessData = { DateTime.Now, ArgumentExtraction.ExtractArgValuePairs(a_Args) }; // TODO: log this to S3
 
-            if (!ArgumentExtraction.ValidateArgs(l_ProcessData[1] as Dictionary<String, Object>)) return;
+            // pull values from arguments
+            Int64 l_TimeInterval = Convert.ToInt64(l_ArgValuePairs[nameof(ArgumentKey.TimeInterval)]);
+            String l_ClientArgumentString = (l_ArgValuePairs[nameof(ArgumentKey.Client)]).ToString();
+            List<Int32> l_Clients = ArgumentExtraction.ReturnClients(l_ClientArgumentString);
+            Int32 l_Delay = Convert.ToInt32(l_ArgValuePairs[nameof(ArgumentKey.Delay)]);
+            DateTime l_LastRunTime = DateTime.Now;
+            m_LogToS3 = (l_ArgValuePairs[nameof(ArgumentKey.LogToS3)].ToString() == "1") ? true : false;
 
-            // args valid, begin operation
-            l_Delay = Convert.ToInt32((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.Delay]);
-            l_TimeInterval = Convert.ToInt64((l_ProcessData[1] as Dictionary<String, Object>)[ArgumentKey.TimeInterval]);
+#if (Log)
+            String logInfo =
+                $"LastRunTime: {l_LastRunTime}\n" +
+                $"TimeInterval: {l_TimeInterval}\n" +
+                $"Client: {l_ClientArgumentString}\n" +
+                $"Delay: {l_Delay}\n" +
+                $"LogToS3: {m_LogToS3}";
+            Console.WriteLine(logInfo);
+
+            String clientInfo = "Clients Extracted: ";
+            foreach (Int32 clientID in l_Clients)
+            {
+                clientInfo += clientID + ", ";
+            }
+            clientInfo = clientInfo.TrimEnd(',', ' ');
+            Console.WriteLine(clientInfo);
+#endif
 
             // sleep thread for delay specified
             if (l_Delay > 0)
@@ -38,129 +60,134 @@ namespace WorkflowVerifyer.App
 
             do // will loop infintely if time interval is specified
             {
-                Int64 l_TimeIntervalMinusRunTime = 0;
                 Stopwatch l_StopWatch = Stopwatch.StartNew();
+                Int64 l_TimeIntervalMinusRunTime = 0;
                 String l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
-                SuccessfulVerifications = 0;
-                Spinner = new ConsoleSpinner(0, 0);
+                DateTime l_RunTime = DateTime.UtcNow;
+                Spinner l_Spinner;
 
-                // TODO: get all verification records from db, store as DataTable (records will be dt, foreach will iterate rows in dt.rows
-                String[] l_Records = { "1", "2", "3", "4", "5" }; 
-                Thread.Sleep(1000); // to simiulate loading time for querying from db
+                Console.Write("Querying ");
+                l_Spinner = new Spinner(Console.CursorLeft, Console.CursorTop);
+                l_Spinner.Start();
 
-                // new parent task for each verification child task
-                Task l_Process = new Task(() =>
+                // extract client workflow from DB
+                Thread.Sleep(3000);
+
+                l_Spinner.Stop("done");
+                m_Verifications = new List<WorkflowVerification>();
+                if (!Directory.Exists(l_TempDirPath))
+                    Directory.CreateDirectory(l_TempDirPath);
+
+                try
                 {
-                    // TODO: replace for with foreach to iterate over DataRow vars in DataTable Rows, allocate first index of l_data to current DataRow var
-                    for (int i = 0; i < l_Records.Length; i++)
+                    // new parent task for each verification child task
+                    Task l_Process = new Task(() =>
                     {
-                        Object[] l_ObjectData = { l_Records[i], DateTime.Now, l_TempDirPath };
+                        foreach (Int32 l_ClientID in l_Clients)
+                        {
+                            Object[] l_ObjectData = { l_ClientID, l_RunTime, l_TempDirPath, l_Clients };
 
-                        // new task for each verification
-                        new Task(() => { if(Verify(l_ObjectData)) ++SuccessfulVerifications; }, TaskCreationOptions.AttachedToParent).Start();
+                            // new task for each verification
+                            new Task(() =>
+                            {
+                                m_Verifications.Add(Verify(l_ObjectData));
+                            }, TaskCreationOptions.AttachedToParent).Start();
+                        }
+                    });
+
+                    // start parent task, wait for children to finish executing
+                    // TODO: before beginning the tasks, query workflow items altogether from db, save as member
+                    l_Process.Start();
+                    l_Process.Wait();
+
+                    // parent task finished, log results
+                    l_StopWatch.Stop();
+
+                    String l_ProcessResultsMessage =
+                        $"Completed in {l_StopWatch.ElapsedMilliseconds}ms";
+
+                    if (l_TimeInterval > 0)
+                    {
+                        l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
+                        l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ?
+                            0 :
+                            l_TimeIntervalMinusRunTime;
+                        l_ProcessResultsMessage +=
+                            $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}";
                     }
-                });
 
-                // start parent task, wait for children to finish executing
-                Spinner.Start();
-                l_Process.Start();
-                l_Process.Wait();
+                    // log any process results here all together TODO: include start time and clients here
+                    Console.SetCursorPosition(0, Console.CursorTop - 1);
+                    Console.WriteLine($"Items modified for {m_Verifications.Count} clients:");
+                    foreach (WorkflowVerification l_Verification in m_Verifications)
+                    {
+                        foreach (ItemModification l_Mod in l_Verification.ItemsModified)
+                        {
+                            Console.WriteLine(l_Mod);
+                        }
+                    }
+                    Console.WriteLine(l_ProcessResultsMessage);
 
-                // parent task finished, log results
-                l_StopWatch.Stop();
+                    // store runtime the most recent run time in appSettings
+                    l_LastRunTime = l_RunTime;
 
-                String l_ProcessResultsMessage = $"Process completed in {l_StopWatch.ElapsedMilliseconds}ms; {SuccessfulVerifications}/{l_Records.Length} verifications successful";
-                if (l_TimeInterval > 0)
-                {
-                    l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
-                    l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ? 0 : l_TimeIntervalMinusRunTime;
-                    l_ProcessResultsMessage += $" ... Next run in {l_TimeIntervalMinusRunTime}ms";
+                    // sleep thread for the fixed time interval
+                    Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
                 }
-                Spinner.Stop(l_ProcessResultsMessage);
-
-                // sleep thread for the fixed time interval
-                Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
+                catch (Exception e)
+                {
+                    Console.Write(e.Message);
+                }
 
             } while (l_TimeInterval > 0);
         }
-        
-        private static Boolean Verify(Object[] a_ObjectData)
+        private static WorkflowVerification Verify(Object[] a_ObjectData)
         {
-            String a_ClientID = a_ObjectData[0] as String;
+            String a_ClientID = a_ObjectData[0].ToString();
             Nullable<DateTime> a_RunTime = a_ObjectData[1] as Nullable<DateTime>;
             String a_TempDirPath = a_ObjectData[2] as String;
-            
-            Verification l_VerificationResult = new Verification(a_ClientID);
+            List<Int32> a_Clients = a_ObjectData[3] as List<Int32>;
+
+            WorkflowVerification l_VerificationResult = new WorkflowVerification(a_ClientID);
             Stopwatch l_StopWatch = new Stopwatch();
-            Boolean l_RunSuccess = true;
             String l_AwsS3LogPath = "test" + a_ClientID + "/" + DateTime.Now.ToFileTimeUtc();
             VerificationLogger l_Logger = new VerificationLogger(l_AwsS3LogPath, a_RunTime, a_TempDirPath);
+            Int32 l_Percentage;
 
-            try
-            {
-                l_StopWatch.Start();
+            // apply any item modifications here
+            l_StopWatch.Start();
 
-                if (a_ClientID == "3") Convert.ToBoolean(a_ClientID);
+            // NOTE: we have to implement logic for this
+            // append assignments to this Verification object
+            l_VerificationResult.AppendAssignments();
+            Thread.Sleep(Convert.ToInt32(a_ClientID) * 1000);
 
-                // FIXME: sleeping to simulate processing time; need to implement actual method logic here
-                // TODO: should route to this specific client's verifyer class
-                Thread.Sleep(Convert.ToInt32(a_ClientID) * 1000);
+            // end, store results
+            l_StopWatch.Stop();
+            l_VerificationResult.RunSuccess = true;
+            l_VerificationResult.ElapsedTime = l_StopWatch.ElapsedMilliseconds;
+            l_Percentage = ((m_Verifications.Count + 1) * 100) / a_Clients.Count;
 
-                l_StopWatch.Stop();
-                l_VerificationResult.RunSuccess = true;
-            }
-            catch (Exception e)
-            {
-                l_StopWatch.Stop();
-                l_VerificationResult.RunSuccess = false;
-                l_RunSuccess = false;
+            // log to console
+            if (m_Verifications.Count != 0) Console.SetCursorPosition(0, Console.CursorTop - 2);
+            Console.WriteLine($"Making changes ({m_Verifications.Count + 1}/{a_Clients.Count})");
+            Console.WriteLine(ProgressTracker.ShowProgress(l_Percentage));
 
-                l_Logger.AddEntry("Unknown", false, "Unknown error occurred during workflow verification for client '" + l_VerificationResult.ClientID + "'.", e);
-                l_Logger.Save();
-
-                LogError(e);
-            }
-            finally
-            {
-                l_VerificationResult.ElapsedTime=l_StopWatch.ElapsedMilliseconds;
-                // m_Spinner.Stop($"{l_VerificationResult}");
-                // m_Spinner = new ConsoleSpinner(0, 0);
-                // m_Spinner.Start();
-            }
-
-            return l_RunSuccess;
-        }
-        public static void LogError(Exception e)
-        {
-            DateTime timeOfError = DateTime.Now;
-            String errorMessage = $@"
-                ERROR: Occurred at {timeOfError}
-                Exception: {e.Message}
-                Trace: {e.StackTrace}
-            ";
-
-            //VerificationLogger.LogToS3(errorMessage);
-        }
-        public static void LogError(String message)
-        {
-            DateTime timeOfError = DateTime.Now;
-            String errorMessage = $@"
-                ERROR: Occurred at {timeOfError}
-                Message: {message}
-            ";
-
-            //VerificationLogger.LogToS3(errorMessage);
+            return l_VerificationResult;
         }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Console.Write(e.ExceptionObject.ToString());
-            var l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
-            VerificationLogger l_Logger = new VerificationLogger(DateTime.Today.ToString("yyMMdd"), DateTime.Now, l_TempDirPath);
-            l_Logger.AddEntry("Unknown", false, "Unknown Error Occurred.", (Exception)e.ExceptionObject);
-            l_Logger.Save();
-            Environment.Exit(1);
 
-            //VerificationLogger.LogToS3(errorMessage);
+            if (m_LogToS3)
+            {
+                var l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
+                VerificationLogger l_Logger = new VerificationLogger(DateTime.Today.ToString("yyMMdd"), DateTime.Now, l_TempDirPath);
+                l_Logger.AddEntry("Unknown", false, "Unknown Error Occurred.", (Exception)e.ExceptionObject);
+                l_Logger.Save();
+            }
+
+            Environment.Exit(1);
         }
     }
 }

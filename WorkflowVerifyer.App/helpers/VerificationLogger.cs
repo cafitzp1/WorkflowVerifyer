@@ -5,13 +5,9 @@ using System.IO;
 using Amazon.S3;
 using Amazon.S3.Transfer;
 using Amazon.Runtime.CredentialManagement;
-using WorkflowVerifyer.Core;
 
 namespace WorkflowVerifyer.App.Helpers
 {
-    /// <summary>
-    /// A class for logging verification process results
-    /// </summary>
     internal class VerificationLogger
     {
         public static Amazon.RegionEndpoint AwsS3Region { get => Amazon.RegionEndpoint.GetBySystemName(ConfigurationManager.AppSettings["AwsS3Region"]); }
