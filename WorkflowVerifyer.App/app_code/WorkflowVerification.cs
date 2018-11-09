@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace WorkflowVerifyer.App.Helpers
 {
-    public class Verification
+    public class WorkflowVerification
     {
         public String ClientID { get; }
         public DateTime RunTime { get; }
@@ -16,7 +16,7 @@ namespace WorkflowVerifyer.App.Helpers
         public Boolean RunSuccess { get; set; }
         public Int64 ElapsedTime { get; set; }
 
-        public Verification(String a_ClientID)
+        public WorkflowVerification(String a_ClientID)
         {
             ClientID = a_ClientID;
             RunTime = DateTime.Now;
@@ -42,8 +42,6 @@ namespace WorkflowVerifyer.App.Helpers
 
             // return the list of modifications
             // ...
-
-            System.Threading.Thread.Sleep(500);
 
             this.ItemsModified.Add(new ItemModification(this.ClientID, "2123123", "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
             this.ItemsModified.Add(new ItemModification(this.ClientID, "2234234", "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));

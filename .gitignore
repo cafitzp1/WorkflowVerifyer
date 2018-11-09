@@ -14,10 +14,13 @@
 # misc
 /WorkflowVerifyer.App/App.config
 /WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.App.dll.config
+/WorkflowVerifyer.App/AppSettinds.json
+/WorkflowVerifyer.App/bin/Debug/netcoreapp2.1/WorkflowVerifyer.AppSettings.dll.json
 /.vs/
 **/bin/
 **/obj/
 **/App.config
+**/AppSettings.json
 *.user
 *.suo
 *.sln.cache

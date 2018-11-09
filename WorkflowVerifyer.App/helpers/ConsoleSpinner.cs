@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace WorkflowVerifyer.App.Helpers
 {
-    public class ConsoleSpinner : IDisposable
+    public class Spinner : IDisposable
     {
         private const string Sequence = @"/-\|";
         private int counter = 0;
@@ -13,46 +13,57 @@ namespace WorkflowVerifyer.App.Helpers
         private bool active;
         private readonly Thread thread;
 
-        public ConsoleSpinner(int left, int top, int delay = 100)
+        public Spinner(int left, int top, int delay = 100)
         {
             this.left = left;
             this.top = top;
             this.delay = delay;
             thread = new Thread(Spin);
         }
-        public void Start(string msg = "")
-        {
-            if (msg.Length > 0) Console.Write(msg);
 
+        public void Start()
+        {
             active = true;
             if (!thread.IsAlive)
                 thread.Start();
         }
-        public void Stop(string msg = " ")
+
+        public void Stop(string msg="")
         {
             active = false;
-            Draw(msg);
+            
+            if (msg!=String.Empty)
+                Draw("Done");
+
+            else Draw(' ');
         }
+
         private void Spin()
         {
-            Console.Write("-\n");
-            //Console.CursorVisible = false;
             while (active)
             {
                 Turn();
                 Thread.Sleep(delay);
             }
-            //Console.CursorVisible = true;
         }
-        private void Draw(String str)
+
+        private void Draw(char c)
         {
-            Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop - 1);
-            Console.Write($"{str}\n");
+            Console.SetCursorPosition(left, top);
+            Console.WriteLine(c);
         }
+
+        private void Draw(string str)
+        {
+            Console.SetCursorPosition(left, top);
+            Console.WriteLine(str);
+        }
+
         private void Turn()
         {
-            Draw(Sequence[++counter % Sequence.Length].ToString());
+            Draw(Sequence[++counter % Sequence.Length]);
         }
+
         public void Dispose()
         {
             Stop();
