@@ -12,9 +12,6 @@ namespace WorkflowVerifyer.App.Helpers
         public String UserNote { get; private set; }
         public Nullable<Int32> SystemUserID { get; private set; }
 
-        /// <summary>
-        /// Creates a SystemErrorLog Object
-        /// </summary>
         public SystemErrorLog()
         {
             SystemErrorLogID = new Nullable<Int32>();
@@ -26,10 +23,6 @@ namespace WorkflowVerifyer.App.Helpers
             SystemUserID = new Nullable<Int32>();
         }
 
-        /// <summary>
-        /// Method to create and return a SystemErrorLog Object
-        /// </summary>
-        /// <param name="a_Exception"></param>
         public static SystemErrorLog ReturnErrorLog(Exception a_Exception)
         {
             SystemErrorLog l_SystemErrorLog = new SystemErrorLog();

@@ -2,12 +2,16 @@
 #undef Debug
 #define Log
 #undef Log
+#define Test
+#undef Test
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowVerifyer.App.Helpers;
@@ -16,13 +20,26 @@ namespace WorkflowVerifyer.App
 {
     internal class Program
     {
-        private static volatile List<WorkflowVerification> m_Verifications;
+        public static ManualResetEvent _Shutdown = new ManualResetEvent(false);
+        public static ManualResetEventSlim _Complete = new ManualResetEventSlim();
         private static Boolean m_LogToS3;
+        private static volatile List<WorkflowVerification> m_Verifications;
 
-        private static void Main(String[] a_Args)
+        private static int Main(String[] a_Args)
         {
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
+            Console.WriteLine("Starting application...");
+#if Test
+            Test();
+#else
+            Run(a_Args);
+#endif
+
+            return 0;
+        }
+        private static void Run(String[] a_Args)
+        {
             Dictionary<String, Object> l_ArgValuePairs = ArgumentExtraction.ExtractArgValuePairs(a_Args);
 
             // pull values from arguments
@@ -67,13 +84,15 @@ namespace WorkflowVerifyer.App
                 Spinner l_Spinner;
 
                 Console.Write("Querying ");
+                Console.CursorVisible = false;
                 l_Spinner = new Spinner(Console.CursorLeft, Console.CursorTop);
                 l_Spinner.Start();
 
-                // extract client workflow from DB
+                // TODO: extract client workflows from DB after LatestVerification()
                 Thread.Sleep(3000);
 
                 l_Spinner.Stop("done");
+                Console.Write("Making changes");
                 m_Verifications = new List<WorkflowVerification>();
                 if (!Directory.Exists(l_TempDirPath))
                     Directory.CreateDirectory(l_TempDirPath);
@@ -83,8 +102,11 @@ namespace WorkflowVerifyer.App
                     // new parent task for each verification child task
                     Task l_Process = new Task(() =>
                     {
+                        // FIXME: use records in dictionary for iteration (see comments right below)
                         foreach (Int32 l_ClientID in l_Clients)
                         {
+                            // TODO: since we have workflow items from earlier, pass this client's collection
+                            // maybe use a dictionary <Int32, List<WorkflowItem> (client id for int)
                             Object[] l_ObjectData = { l_ClientID, l_RunTime, l_TempDirPath, l_Clients };
 
                             // new task for each verification
@@ -96,7 +118,6 @@ namespace WorkflowVerifyer.App
                     });
 
                     // start parent task, wait for children to finish executing
-                    // TODO: before beginning the tasks, query workflow items altogether from db, save as member
                     l_Process.Start();
                     l_Process.Wait();
 
@@ -119,19 +140,31 @@ namespace WorkflowVerifyer.App
                     // log any process results here all together TODO: include start time and clients here
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
                     Console.WriteLine($"Items modified for {m_Verifications.Count} clients:");
+                    Int32 l_VerificationCount = 0;
                     foreach (WorkflowVerification l_Verification in m_Verifications)
                     {
                         foreach (ItemModification l_Mod in l_Verification.ItemsModified)
                         {
                             Console.WriteLine(l_Mod);
+                            l_VerificationCount++;
                         }
                     }
                     Console.WriteLine(l_ProcessResultsMessage);
 
-                    // store runtime the most recent run time in appSettings
-                    l_LastRunTime = l_RunTime;
+                    // write log (id, runtime, clients (count), modifications (count), etc) to db
+                    using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
+                    {
+                        using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_Add"))
+                        {
+                            l_cmd.Parameters.AddWithValue("@a_RunTime", l_RunTime);
+                            l_cmd.Parameters.AddWithValue("@a_Summary", $"{l_VerificationCount} items modified for {m_Verifications.Count} clients");
+                            l_conn.Open();
+                            l_cmd.ExecuteNonQuery();
+                        }
+                    }
 
                     // sleep thread for the fixed time interval
+                    Console.CursorVisible = true;
                     Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
                 }
                 catch (Exception e)
@@ -160,7 +193,7 @@ namespace WorkflowVerifyer.App
             // NOTE: we have to implement logic for this
             // append assignments to this Verification object
             l_VerificationResult.AppendAssignments();
-            Thread.Sleep(Convert.ToInt32(a_ClientID) * 1000);
+            // Thread.Sleep(Convert.ToInt32(a_ClientID) * 1000);
 
             // end, store results
             l_StopWatch.Stop();
@@ -169,11 +202,34 @@ namespace WorkflowVerifyer.App
             l_Percentage = ((m_Verifications.Count + 1) * 100) / a_Clients.Count;
 
             // log to console
-            if (m_Verifications.Count != 0) Console.SetCursorPosition(0, Console.CursorTop - 2);
+            if (m_Verifications.Count != 0) 
+                Console.SetCursorPosition(0, Console.CursorTop - 2);
+            Console.SetCursorPosition(0, Console.CursorTop);
             Console.WriteLine($"Making changes ({m_Verifications.Count + 1}/{a_Clients.Count})");
             Console.WriteLine(ProgressTracker.ShowProgress(l_Percentage));
 
             return l_VerificationResult;
+        }
+        private static DateTime LatestVerification()
+        {
+            DateTime l_Latest = DateTime.Now;
+
+            using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
+            {
+                using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_GetLatest"))
+                {
+                    l_conn.Open();
+                    using (SqlDataReader l_rdr = l_cmd.ExecuteReader())
+                    {
+                        if (l_rdr.Read())
+                        {
+                            l_Latest = Convert.ToDateTime(l_rdr["RunTime"]);
+                        }
+                    }
+                }
+            }
+
+            return l_Latest;
         }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
@@ -188,6 +244,38 @@ namespace WorkflowVerifyer.App
             }
 
             Environment.Exit(1);
+        }
+        private static void Test()
+        {
+            DateTime? time = DateTime.Now;
+
+            using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
+            {
+                using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_Add"))
+                {
+                    l_cmd.Parameters.AddWithValue("@a_RunTime", DateTime.Now);
+                    l_cmd.Parameters.AddWithValue("@a_Summary", "Hello, this is a test");
+                    l_conn.Open();
+                    l_cmd.ExecuteNonQuery();
+                }
+            }
+
+            using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
+            {
+                using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_GetLatest"))
+                {
+                    l_conn.Open();
+                    using (SqlDataReader l_rdr = l_cmd.ExecuteReader())
+                    {
+                        if (l_rdr.Read())
+                        {
+                            time = Convert.ToDateTime(l_rdr["RunTime"]);
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Time = " + time.Value.ToLongTimeString());
         }
     }
 }

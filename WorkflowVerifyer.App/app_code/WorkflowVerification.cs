@@ -28,9 +28,6 @@ namespace WorkflowVerifyer.App.Helpers
         {
             List<ItemModification> l_ItemModifications = new List<ItemModification>();
 
-            // get workflow items for this client AFTER a certain time
-            // ...
-
             // loop through each item group and append data listed for any
             // ...
 

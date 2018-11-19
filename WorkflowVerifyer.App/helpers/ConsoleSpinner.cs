@@ -50,7 +50,7 @@ namespace WorkflowVerifyer.App.Helpers
         private void Draw(char c)
         {
             Console.SetCursorPosition(left, top);
-            Console.WriteLine(c);
+            Console.Write(c);
         }
 
         private void Draw(string str)
