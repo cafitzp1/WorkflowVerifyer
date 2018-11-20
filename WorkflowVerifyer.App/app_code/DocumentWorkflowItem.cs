@@ -1,11 +1,15 @@
 using System;
-using System.IO;
-using System.Text;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Configuration;
 using WorkflowVerifyer.App.Helpers;
 
+/// <summary>
+/// NOT a replication of Certus.Core.DocumentWorkflowItem.
+/// This class is an adaptation which only serves the 
+/// functionailty of this program. Only the data necessary 
+/// for this app's processes has been is included here.
+/// </summary>
 public class DocumentWorkflowItem
 {
     private Nullable<Int32> m_DocumentWorkflowItemID;
@@ -29,6 +33,7 @@ public class DocumentWorkflowItem
     private Nullable<DateTime> m_DateCreated;
     private Boolean m_IsDirty;
 
+    #region Properties
     public Nullable<Int32> DocumentWorkflowItemID
     {
         get => m_DocumentWorkflowItemID;
@@ -180,6 +185,7 @@ public class DocumentWorkflowItem
     {
         get => m_DateCreated;
     }
+    #endregion
 
     public DocumentWorkflowItem()
     {
@@ -204,9 +210,10 @@ public class DocumentWorkflowItem
         m_DateCreated = new Nullable<DateTime>();
         m_IsDirty = true;
     }
-
     public DocumentWorkflowItem(Int32 a_DocumentWorkflowItemID) : this()
     {
+        throw new Exception("Method functionaility may not yet be compatible with this program");
+
         using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
         {
             using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_Get"))
@@ -249,9 +256,74 @@ public class DocumentWorkflowItem
             }
         }
     }
+    public static Queue<DocumentWorkflowItem> GetLastestForClient(Int32 a_ClientID, DateTime a_LastRunTime)
+    {
+        Queue<DocumentWorkflowItem> l_queue = new Queue<DocumentWorkflowItem>();
+        DataTable l_results = new DataTable();
+        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
+        {
+            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_GetLastestForClient"))
+            {
+                l_cmd.Parameters.AddWithValue("@a_ClientID", a_ClientID);
+                l_cmd.Parameters.AddWithValue("@a_LastRunTime", a_LastRunTime);
+                l_conn.Open();
+                using (SqlDataReader l_rdr = l_cmd.ExecuteReader())
+                {
+                    while (l_rdr.Read())
+                    {
+                        DocumentWorkflowItem l_tmp = new DocumentWorkflowItem();
 
+                        l_tmp.DocumentWorkflowItemID = Convert.ToInt32(l_rdr["DocumentWorkflowItem"]);
+                        l_tmp.ClientID = Convert.ToInt32(l_rdr["ClientID"]);
+                        l_tmp.EmailDate = Convert.ToDateTime(l_rdr["EmailDate"]);
+                        l_tmp.EmailToAddress = l_rdr["EmailToAddress"].ToString();
+                        l_tmp.EmailCCAddress = l_rdr["EmailCCAddress"].ToString();
+                        l_tmp.EmailFromAddress = l_rdr["EmailFromAddress"].ToString();
+                        l_tmp.EmailFromName = l_rdr["EmailFromName"].ToString();
+                        l_tmp.EmailSubject = l_rdr["EmailSubject"].ToString();
+                        l_tmp.EmailBody = l_rdr["EmailBody"].ToString();
+                        l_tmp.EmailBodySearchText = l_rdr["EmailBodySearchText"].ToString();
+                        l_tmp.DocumentationAnalystID = Convert.ToInt32(l_rdr["DocumentationAnalystID"]);
+                        l_tmp.ComplianceAnalystID = Convert.ToInt32(l_rdr["ComplianceAnalystID"]);
+                        l_tmp.CompanyID = Convert.ToInt32(l_rdr["CompanyID"]);
+                        l_tmp.CompanyCertificateID = Convert.ToInt32(l_rdr["CompanyCertificateID"]);
+                        l_tmp.Notes = l_rdr["Notes"].ToString();
+                        l_tmp.DocumentWorkflowStatusID = Convert.ToInt32(l_rdr["DocumentWorkflowStatusID"]);
+                        l_tmp.DocumentWorkflowUrgencyID = Convert.ToInt32(l_rdr["DocumentWorkflowUrgencyID"]);
+                        l_tmp.LastStatusChangeDate = Convert.ToDateTime(l_rdr["LastStatusChangeDate"]);
+                        // l_tmp.DateCreated = l_rdr["DateCreated"];
+                        // l_tmp.IsDirty = l_rdr["IsDirty"];
+
+                        l_queue.Enqueue(l_tmp);
+                    }
+                }
+            }
+        }
+        return l_queue;
+    }
+    public static DataTable GetAttachments(Int32 a_DocumentWorkflowItemID)
+    {
+        throw new Exception("Method functionaility may not yet be compatible with this program");
+
+        DataTable l_results = new DataTable();
+        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
+        {
+            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_GetAttachments"))
+            {
+                l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowItemID", a_DocumentWorkflowItemID);
+                using (SqlDataAdapter l_adapter = new SqlDataAdapter(l_cmd))
+                {
+                    l_conn.Open();
+                    l_adapter.Fill(l_results);
+                }
+            }
+        }
+        return l_results;
+    }
     public void Save()
     {
+        throw new Exception("Method functionaility may not yet be compatible with this program");
+
         if (m_IsDirty)
         {
             using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
@@ -292,174 +364,4 @@ public class DocumentWorkflowItem
             m_IsDirty = false;
         }
     }
-
-    // public void InsertFile(string a_FileName, string a_FileMIME, byte[] a_FileBytes, bool a_SendToExtractor)
-    // {
-    //     if (m_DocumentWorkflowItemID.HasValue)
-    //     {
-    //         var l_CertusFile = new CertusFile();
-    //         l_CertusFile.FileName = a_FileName;
-    //         l_CertusFile.FileMIME = a_FileMIME;
-    //         l_CertusFile.ClientID = m_ClientID;
-    //         l_CertusFile.Save(a_FileBytes);
-
-    //         if (l_CertusFile.CertusFileID.HasValue)
-    //         {
-    //             using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-    //             {
-    //                 using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItemAttachment_Insert"))
-    //                 {
-    //                     l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowItemID", m_DocumentWorkflowItemID.Value);
-    //                     l_cmd.Parameters.AddWithValue("@a_CertusFileID", l_CertusFile.CertusFileID);
-    //                     l_cmd.Parameters.AddWithValue("@a_AttachmentName", l_CertusFile.FileName);
-    //                     l_conn.Open();
-    //                     l_cmd.ExecuteNonQuery();
-    //                 }
-    //             }
-    //             if (a_SendToExtractor)
-    //                 l_CertusFile.ExtractWorkflowItem();
-    //         }
-    //     }
-    // }
-
-    // public static void RenameFile(Int32 a_CertusFileID, string a_NewFileName)
-    // {
-    //     CertusFile l_File = new CertusFile(a_CertusFileID);
-    //     if (l_File.FileName != a_NewFileName)
-    //     {
-    //         l_File.FileName = a_NewFileName;
-    //         l_File.Save();
-    //     }
-    // }
-
-    public static DataRow GetForView(Int32 a_DocumentWorkflowItemID)
-    {
-        DataTable l_results = new DataTable();
-        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-        {
-            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_GetForView"))
-            {
-                l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowItemID", a_DocumentWorkflowItemID);
-                using (SqlDataAdapter l_adapter = new SqlDataAdapter(l_cmd))
-                {
-                    l_conn.Open();
-                    l_adapter.Fill(l_results);
-                }
-            }
-        }
-
-        if (l_results.Rows.Count > 0)
-            return l_results.Rows[0];
-        else
-            return null;
-    }
-
-    public static Int32 GetByCertusFileID(Int32 a_CertusFileID)
-    {
-        DataTable l_results = new DataTable();
-        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-        {
-            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_GetByCertusFileID"))
-            {
-                l_cmd.Parameters.AddWithValue("@a_CertusFileID", a_CertusFileID);
-                using (SqlDataAdapter l_adapter = new SqlDataAdapter(l_cmd))
-                {
-                    l_conn.Open();
-                    l_adapter.Fill(l_results);
-                }
-            }
-        }
-        if (l_results.Rows.Count == 1)
-            return Convert.ToInt32(l_results.Rows[0]["DocumentWorkflowItemID"]);
-        else
-            return 0;
-    }
-
-    public static DataTable GetRecordsWithOpenItemsByClient(Int32 a_ClientID)
-    {
-        DataTable l_results = new DataTable();
-        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-        {
-            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_GetRecordsWithOpenItemsByClient"))
-            {
-                l_cmd.Parameters.AddWithValue("@a_ClientID", a_ClientID);
-                using (SqlDataAdapter l_adapter = new SqlDataAdapter(l_cmd))
-                {
-                    l_conn.Open();
-                    l_adapter.Fill(l_results);
-                }
-            }
-        }
-        return l_results;
-    }
-
-    public static DataTable GetAttachments(Int32 a_DocumentWorkflowItemID)
-    {
-        DataTable l_results = new DataTable();
-        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-        {
-            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowItem_GetAttachments"))
-            {
-                l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowItemID", a_DocumentWorkflowItemID);
-                using (SqlDataAdapter l_adapter = new SqlDataAdapter(l_cmd))
-                {
-                    l_conn.Open();
-                    l_adapter.Fill(l_results);
-                }
-            }
-        }
-        return l_results;
-    }
-
-    // public static Int32 SaveEmailBody(Int32 a_DocumentWorkflowItemID, string a_FileName)
-    // {
-    //     DocumentWorkflowItem l_DocumentWorkFlowItem = new DocumentWorkflowItem(a_DocumentWorkflowItemID);
-
-    //     string l_EmailBody = "";
-    //     byte[] l_FileBytes = Util.GetEmailContent(a_DocumentWorkflowItemID);
-    //     if (l_FileBytes != null)
-    //         l_EmailBody = Encoding.Default.GetString(l_FileBytes);
-
-    //     string l_EmailFrom = l_DocumentWorkFlowItem.EmailFromAddress;
-    //     string l_EmailSent = l_DocumentWorkFlowItem.EmailDate.ToString();
-    //     string l_EmailTo = l_DocumentWorkFlowItem.EmailToAddress;
-    //     string l_EmailCC = l_DocumentWorkFlowItem.EmailCCAddress;
-    //     string l_EmailSubject = l_DocumentWorkFlowItem.EmailSubject;
-
-    //     string l_EmailHeader = "<table><tr><td width=\"12%\" style=\"font-weight: bold;vertical-align:top\">From:</td><td>" + l_EmailFrom + "</td></tr>";
-    //     l_EmailHeader = l_EmailHeader + "<tr><td width=\"12%\" style=\"font-weight: bold;text-align:left;vertical-align:top\">Sent:</td><td>" + l_EmailSent + "</td></tr>";
-    //     l_EmailHeader = l_EmailHeader + "<tr><td width=\"12%\" style=\"font-weight: bold;text-align:left;vertical-align:top\">To:</td><td>" + l_EmailTo + "</td></tr>";
-    //     if (l_EmailCC.Length > 0)
-    //         l_EmailHeader = l_EmailHeader + "<tr><td width=\"12%\" style=\"font-weight: bold;text-align:left;vertical-align:top\">Cc:</td><td>" + l_EmailCC + "</td></tr>";
-    //     l_EmailHeader = l_EmailHeader + "<tr><td width=\"12%\" style=\"font-weight: bold;text-align:left;vertical-align:top\">Subject:</td><td>" + l_EmailSubject + "</td></tr></table><br />";
-    //     l_EmailHeader = l_EmailHeader + "<hr style=\"border-bottom-style: solid;\"><br /><br />";
-
-    //     HtmlToPdf l_HtmltoPdf = new HtmlToPdf();
-    //     l_HtmltoPdf.SerialNumber = ConfigurationManager.AppSettings("HiQPdfSerialNumber");
-    //     l_HtmltoPdf.Document.PageSize = PdfPageSize.A4;
-    //     l_HtmltoPdf.Document.PageOrientation = PdfPageOrientation.Portrait;
-    //     l_HtmltoPdf.Document.Margins = new PdfMargins(20);
-    //     l_HtmltoPdf.Document.Margins.Top = 30;
-    //     l_HtmltoPdf.Document.FitPageWidth = true;
-
-    //     l_EmailBody = l_EmailBody.TrimStart();
-    //     if (l_EmailBody.StartsWith("<"))
-    //         l_EmailBody = l_EmailHeader + l_EmailBody;
-    //     else
-    //     {
-    //         l_EmailBody = l_EmailBody.Replace(Constants.vbLf, "<br />");
-    //         l_EmailBody = l_EmailHeader + "<p>" + l_EmailBody + "</p>";
-    //     }
-
-    //     CertusFile l_CertusFile = new CertusFile();
-    //     l_CertusFile.ClientID = l_DocumentWorkFlowItem.ClientID;
-    //     if ((a_FileName.EndsWith(".pdf")))
-    //         l_CertusFile.FileName = a_FileName;
-    //     else
-    //         l_CertusFile.FileName = a_FileName + ".pdf";
-    //     l_CertusFile.FileMIME = "application/pdf";
-    //     l_CertusFile.Save(l_HtmltoPdf.ConvertHtmlToMemory(l_EmailBody, null/* TODO Change to default(_) if this is not a reference type */));
-
-    //     return l_CertusFile.CertusFileID;
-    // }
 }

@@ -8,12 +8,12 @@ namespace WorkflowVerifyer.App.Helpers
 {
     public class ItemModification
     {
-        public String ClientID { get; private set; }
-        public String DocumentWorkflowItemID { get; private set; }
+        public Int32 ClientID { get; private set; }
+        public Int32 DocumentWorkflowItemID { get; private set; }
         public String OldValuePair { get; private set; }
         public String NewValuePair { get; private set; }
 
-        public ItemModification(String a_ClientID, String a_DocumentWorkflowItemID, String a_OldValuePair, String a_NewValuePair)
+        public ItemModification(Int32 a_ClientID, Int32 a_DocumentWorkflowItemID, String a_OldValuePair, String a_NewValuePair)
         {
             DocumentWorkflowItemID = a_DocumentWorkflowItemID;
             ClientID = a_ClientID;
@@ -21,7 +21,7 @@ namespace WorkflowVerifyer.App.Helpers
             NewValuePair = a_NewValuePair;
         }
         
-        public String InitialModification(String a_ClientID, String a_DocumentWorkflowItemID, String a_OldValuePair, String a_NewValuePair)
+        public String InitialModification(Int32 a_ClientID, Int32 a_DocumentWorkflowItemID, String a_OldValuePair, String a_NewValuePair)
         {
             return $"- {a_ClientID}: [{a_DocumentWorkflowItemID}]\t{a_OldValuePair} -> {a_NewValuePair}";
         }
