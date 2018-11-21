@@ -1,7 +1,7 @@
-﻿#define Debug
-#undef Debug
-#define Log
-#undef Log
+﻿//#define Debug
+//#define Log
+#define Test
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -28,7 +28,13 @@ namespace WorkflowVerifyer.App
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
             Console.WriteLine("Starting application...");
+
+#if !Test
             Run(a_Args);
+#else
+            Test();
+            Console.ReadKey();
+#endif
 
             return 0;
         }
@@ -150,7 +156,7 @@ namespace WorkflowVerifyer.App
                             $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}";
                     }
 
-                    // log any process results here all together TODO: include start time and clients here
+                    // log any process results here all together
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
                     Console.WriteLine($"{l_ItemsModified.Count} items modified for {m_VerificationsProcessed} clients");
                     foreach (ItemModification l_Mod in l_ItemsModified)
@@ -221,39 +227,24 @@ namespace WorkflowVerifyer.App
                 l_Logger.Save();
             }
 
+#if Test
+            Console.ReadKey();
+#endif
             Environment.Exit(1);
         }
         private static void Test()
         {
             DateTime? time = DateTime.Now;
 
-            using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-            {
-                using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_Add"))
-                {
-                    l_cmd.Parameters.AddWithValue("@a_RunTime", DateTime.Now);
-                    l_cmd.Parameters.AddWithValue("@a_Summary", "Hello, this is a test");
-                    l_conn.Open();
-                    l_cmd.ExecuteNonQuery();
-                }
-            }
+            WorkflowVerification test = new WorkflowVerification(36);
+            //test.Workflow = DocumentWorkflowItem.GetLastestForClient(test.ClientID, DateTime.Now.AddHours(-1));
 
-            using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-            {
-                using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_GetLatest"))
-                {
-                    l_conn.Open();
-                    using (SqlDataReader l_rdr = l_cmd.ExecuteReader())
-                    {
-                        if (l_rdr.Read())
-                        {
-                            time = Convert.ToDateTime(l_rdr["RunTime"]);
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine("Time = " + time.Value.ToLongTimeString());
+            //foreach(DocumentWorkflowItem item in test.Workflow)
+            //{
+            //    Console.WriteLine(item.ToString());
+            //}
+            DocumentWorkflowItem item = new DocumentWorkflowItem(222);
+            Console.WriteLine(item.ToString());
         }
     }
 }

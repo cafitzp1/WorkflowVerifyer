@@ -11,7 +11,7 @@ namespace WorkflowVerifyer.App.Helpers
     public class WorkflowVerification
     {
         public Int32 ClientID { get; }
-        public Queue<DocumentWorkflowItem> Workflow { get; }
+        public Queue<DocumentWorkflowItem> Workflow { get; set; }
         public DateTime RunTime { get; }
         public List<ItemModification> ItemsModified { get; private set; }
         public Boolean Processed { get; set; }
