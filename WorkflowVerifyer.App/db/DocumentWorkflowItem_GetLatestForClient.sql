@@ -27,4 +27,5 @@ FROM		dbo.[DocumentWorkflowItem] as dwi
 LEFT JOIN	dbo.[CertusFile] as cf ON dwi.[CertusFileID] = cf.[CertusFileID]
 WHERE		dwi.[ClientID] = @a_ClientID
 AND			dwi.[EmailDate] > @a_LastRunTime
+AND			dwi.[DocumentWorkflowStatusID] <= 3
 ORDER BY	dwi.[DocumentWorkflowItemID] DESC;

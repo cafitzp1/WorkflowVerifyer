@@ -11,30 +11,33 @@ namespace WorkflowVerifyer.App.Helpers
     public class WorkflowVerification
     {
         public Int32 ClientID { get; }
-        public Queue<DocumentWorkflowItem> Workflow { get; set; }
+        public List<DocumentWorkflowItem> Workflow { get; set; }
         public DateTime RunTime { get; }
         public List<ItemModification> ItemsModified { get; private set; }
         public Boolean Processed { get; set; }
+        public Boolean ChangesMade { get; set; }
         public Boolean RunSuccess { get; set; }
         public Int64 ElapsedTime { get; set; }
 
         public WorkflowVerification(Int32 a_ClientID)
         {
             ClientID = a_ClientID;
-            Workflow = new Queue<DocumentWorkflowItem>();
+            Workflow = new List<DocumentWorkflowItem>();
             RunTime = DateTime.Now;
             ItemsModified = new List<ItemModification>();
             Processed = false;
+            ChangesMade = false;
             RunSuccess = false;
             ElapsedTime = 0;
         }
-        public WorkflowVerification(Int32 a_ClientID, Queue<DocumentWorkflowItem> a_Workflow)
+        public WorkflowVerification(Int32 a_ClientID, List<DocumentWorkflowItem> a_Workflow)
         {
             ClientID = a_ClientID;
             Workflow = a_Workflow;
             RunTime = DateTime.Now;
             ItemsModified = new List<ItemModification>();
             Processed = false;
+            ChangesMade = false;
             RunSuccess = false;
             ElapsedTime = 0;
         }
@@ -42,23 +45,107 @@ namespace WorkflowVerifyer.App.Helpers
         public void AppendAssignments()
         {
             List<ItemModification> l_ItemModifications = new List<ItemModification>();
+            Int32 l_FirstInGroupComAnalystID = -1;
+            Int32 l_FirstInGroupDocAnalystID = -1;
+
+            // set the first IDs
+            if (Workflow != null && Workflow.Count > 0)
+            {
+                DocumentWorkflowItem l_FirstItem = Workflow[0];
+
+                if (l_FirstItem != null && l_FirstItem.ComplianceAnalystID > 0)
+                    l_FirstInGroupComAnalystID = (Int32)l_FirstItem.ComplianceAnalystID;
+                if (l_FirstItem != null && l_FirstItem.DocumentationAnalystID > 0)
+                    l_FirstInGroupDocAnalystID = (Int32)l_FirstItem.DocumentationAnalystID;
+            }
 
             // loop through each item group and append data listed for any (assignments)
-            //
+            for (Int32 i = 0, j = 1; i < Workflow.Count && j < Workflow.Count; j++)
+            {
+                /*
+                 * i sticks to the first item in a group while j prods the rest
+                 * when j hits a new group, i iterates up back to be even with j
+                 * i passes each item and sees if it needs anything added or changed
+                 * */
 
-            // write changes to db
-            // ...
+                // check if items are of the same group
+                if (Workflow[j].EmailDate == Workflow[i].EmailDate &&
+                    Workflow[j].EmailFromAddress == Workflow[i].EmailFromAddress)
+                {
+                    // if we need an id
+                    if (l_FirstInGroupComAnalystID == -1)
+                    {
+                        // if id is present
+                        if (Workflow[j].ComplianceAnalystID != null && Workflow[j].ComplianceAnalystID != 0)
+                        {
+                            l_FirstInGroupComAnalystID = (Int32)Workflow[j].ComplianceAnalystID;
+                        }
+                    }
+                    if (l_FirstInGroupDocAnalystID == -1)
+                    {
+                        if (Workflow[j].DocumentationAnalystID != null && Workflow[j].DocumentationAnalystID != 0)
+                        {
+                            l_FirstInGroupDocAnalystID = (Int32)Workflow[j].DocumentationAnalystID;
+                        }
+                    }
+                }
+                else
+                {
+                    Int32 l_NewComAnalystID = l_FirstInGroupComAnalystID;
+                    Int32 l_NewDocAnalystID = l_FirstInGroupDocAnalystID;
 
-            // save the list of modifications
-            // ...
+                    // j is not in i's group; bring i up to the next item group
+                    while (i != j)
+                    {
+                        Int32 l_ItemID = Workflow[i].DocumentWorkflowItemID;
 
-            // return the list of modifications
-            // ...
+                        // fill id if missing and if we found one from the group
+                        if (l_NewComAnalystID != -1 && (Workflow[i].ComplianceAnalystID == null || Workflow[i].ComplianceAnalystID < 0))
+                        {
 
-            this.ItemsModified.Add(new ItemModification(this.ClientID, 2123123, "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
-            this.ItemsModified.Add(new ItemModification(this.ClientID, 2234234, "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
-            this.ItemsModified.Add(new ItemModification(this.ClientID, 2345345, "Analyst: Unassigned", "Analyst: Someone Else"));
-            this.ItemsModified.Add(new ItemModification(this.ClientID, 2456456, "Analyst: Unassigned", "Analyst: Connor Fitzpatrick"));
+                            String l_OldComAnalystID = (Workflow[i].ComplianceAnalystID != null && Workflow[i].ComplianceAnalystID != -1) ?
+                                Workflow[i].ComplianceAnalystID.ToString() : "NULL";
+                            Workflow[i].ComplianceAnalystID = l_NewComAnalystID;
+                            ItemsModified.Add(new ItemModification(Workflow[i], "ComplianceAnalystID", l_OldComAnalystID, l_NewComAnalystID));
+                            ChangesMade = true;
+
+                            // change the workflow status id too if we are adding an analyst id
+                            if (Workflow[i].DocumentWorkflowStatusID != 3)
+                            {
+                                String l_OldWorkflowStatusID = Workflow[i].DocumentWorkflowStatusID.ToString();
+                                Workflow[i].DocumentWorkflowStatusID = 3;
+                                ItemsModified.Add(new ItemModification(Workflow[i], "DocumentWorkflowStatusID", l_OldWorkflowStatusID, 3));
+                                Workflow[i].DocumentWorkflowStatusID = 3;
+                            }
+                        }
+
+                        if (l_NewDocAnalystID != -1 && (Workflow[i].DocumentationAnalystID == null || Workflow[i].DocumentationAnalystID < 0))
+                        {
+                            String l_OldVal = (Workflow[i].DocumentationAnalystID != null && Workflow[i].DocumentationAnalystID != -1) ?
+                                Workflow[i].DocumentationAnalystID.ToString() : "NULL";
+                            Workflow[i].DocumentationAnalystID = l_NewDocAnalystID;
+                            ItemsModified.Add(new ItemModification(Workflow[i], "DocumentationAnalystID", l_OldVal, l_NewDocAnalystID));
+                            ChangesMade = true;
+
+                            if (Workflow[i].DocumentWorkflowStatusID != 2)
+                            {
+                                String l_OldWorkflowStatusID = Workflow[i].DocumentWorkflowStatusID.ToString();
+                                Workflow[i].DocumentWorkflowStatusID = 2;
+                                ItemsModified.Add(new ItemModification(Workflow[i], "DocumentWorkflowStatusID", l_OldWorkflowStatusID, 2));
+                                Workflow[i].DocumentWorkflowStatusID = 2;
+                            }
+                        }
+
+                        i++;
+                    }
+
+                    // store ids for the next group to check
+                    l_FirstInGroupComAnalystID = (Workflow[j] != null && Workflow[j].ComplianceAnalystID > 0) ?
+                        (Int32)Workflow[j].ComplianceAnalystID : -1;
+                    l_FirstInGroupDocAnalystID = (Workflow[j] != null && Workflow[j].DocumentationAnalystID > 0) ?
+                        (Int32)Workflow[j].DocumentationAnalystID : -1;
+                }
+            }
         }
         public static DataTable GetAll(Boolean a_ActiveOnly)
         {

@@ -1,17 +1,15 @@
-﻿//#define Debug
-//#define Log
-#define Test
+﻿#define Log
+//#define Test
 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.Loader;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowVerifyer.App.Helpers;
@@ -20,7 +18,8 @@ namespace WorkflowVerifyer.App
 {
     internal class Program
     {
-        private static Int32 m_VerificationsProcessed;
+        private static Int32 m_ClientsProcessed;
+        private static Int32 m_ClientsWhereChangesMade;
         private static Boolean m_LogToS3;
 
         private static int Main(String[] a_Args)
@@ -29,41 +28,34 @@ namespace WorkflowVerifyer.App
 
             Console.WriteLine("Starting application...");
 
-#if !Test
             Run(a_Args);
-#else
-            Test();
+#if DEBUG
             Console.ReadKey();
 #endif
-
             return 0;
         }
         private static void Run(String[] a_Args)
         {
             Dictionary<String, Object> l_ArgValuePairs = ArgumentExtraction.ExtractArgValuePairs(a_Args);
-            Int64 l_TimeInterval = Convert.ToInt64(l_ArgValuePairs[nameof(ArgumentKey.TimeInterval)]);
-            String l_ClientArgumentString = (l_ArgValuePairs[nameof(ArgumentKey.Client)]).ToString();
+            Int64 l_TimeInterval = Convert.ToInt64(l_ArgValuePairs["TimeInterval"]);
+            String l_ClientArgumentString = (l_ArgValuePairs["Client"]).ToString();
             List<Int32> l_Clients = ArgumentExtraction.ReturnClients(l_ClientArgumentString);
-            Int32 l_Delay = Convert.ToInt32(l_ArgValuePairs[nameof(ArgumentKey.Delay)]);
+            Int32 l_Delay = Convert.ToInt32(l_ArgValuePairs["Delay"]);
             String l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
-            m_LogToS3 = l_ArgValuePairs[nameof(ArgumentKey.LogToS3)].ToString() == "1";
+            m_LogToS3 = l_ArgValuePairs["LogToS3"].ToString() == "1";
 
-#if (Log)
-            String logInfo =
-                $"LastRunTime: {l_LastRunTime}\n" +
-                $"TimeInterval: {l_TimeInterval}\n" +
-                $"Client: {l_ClientArgumentString}\n" +
-                $"Delay: {l_Delay}\n" +
-                $"LogToS3: {m_LogToS3}";
-            Console.WriteLine(logInfo);
+#if Log
+            String l_ClientInfo = "Clients specified: ";
+            l_Clients.ForEach((l_ID) => l_ClientInfo += l_ID + ", ");
+            l_ClientInfo = l_ClientInfo.TrimEnd(',', ' ');
 
-            String clientInfo = "Clients Extracted: ";
-            foreach (Int32 clientID in l_Clients)
-            {
-                clientInfo += clientID + ", ";
-            }
-            clientInfo = clientInfo.TrimEnd(',', ' ');
-            Console.WriteLine(clientInfo);
+            Console.WriteLine($"TimeInterval: {l_TimeInterval}");
+            Console.WriteLine($"Delay: {l_Delay}");
+            Console.WriteLine($"LogToS3: {m_LogToS3}");
+            Console.WriteLine(l_ClientInfo);
+            Console.WriteLine();
+
+            Thread.Sleep(3000); // 3 second delay by default incase any args need to be changed
 #endif
 
             // sleep thread for delay specified
@@ -76,37 +68,40 @@ namespace WorkflowVerifyer.App
             do // will loop infintely if time interval is specified
             {
                 Stopwatch l_StopWatch = Stopwatch.StartNew();
-                Int64 l_TimeIntervalMinusRunTime = 0;
-                DateTime l_RunTime = DateTime.UtcNow;
-                DateTime l_LastRunTime = WorkflowVerification.GetLastRunTime();
-                Int32 l_TotalClients = 0;
-                Int32 l_VerificationsProcessing = 0;
-                Dictionary<Int32, Queue<DocumentWorkflowItem>> l_ClientWorkflows = null;
+                Int64 l_TimeIntervalMinusRunTime = l_TimeInterval;
+                DateTime l_RunTime = DateTime.Now;
+                DateTime l_LastRunTime = WorkflowVerification.GetLastRunTime().AddYears(-1);
+                Int32 l_TotalClients = 0, l_VerificationsProcessing = 0;
+                Dictionary<Int32, List<DocumentWorkflowItem>> l_ClientWorkflows = null;
                 ConcurrentQueue<ItemModification> l_ItemsModified = new ConcurrentQueue<ItemModification>();
                 Spinner l_Spinner;
+                m_ClientsProcessed = m_ClientsWhereChangesMade = 0;
 
-                Console.Write("Querying ");
+                Console.WriteLine("Initiating: " + l_RunTime.ToLongTimeString());
+                Console.Write("Reading from database ");
                 Console.CursorVisible = false;
                 l_Spinner = new Spinner(Console.CursorLeft, Console.CursorTop);
                 l_Spinner.Start();
 
-                // TODO: extract client workflows from DB after LatestVerification()
+                // extract client workflows from DB after latest verification
                 try
                 {
-                    l_ClientWorkflows = new Dictionary<int, Queue<DocumentWorkflowItem>>(l_Clients.Count);
+                    l_ClientWorkflows = new Dictionary<Int32, List<DocumentWorkflowItem>>(l_Clients.Count);
                     foreach (Int32 l_ClientID in l_Clients)
                     {
-                        Queue<DocumentWorkflowItem> l_WorkflowItems = DocumentWorkflowItem.GetLastestForClient(l_ClientID, l_LastRunTime);
+                        List<DocumentWorkflowItem> l_WorkflowItems = DocumentWorkflowItem.GetLastestForClient(l_ClientID, l_LastRunTime);
+                        l_ClientWorkflows.Add(l_ClientID, l_WorkflowItems);
                     }
                     l_TotalClients = l_ClientWorkflows.Values.Count((v) => v.Count > 0);
                 }
                 catch (Exception e)
                 {
-                    Console.Write(e.Message);
+                    // we cannot continue the program if items are not able to be read from the db
+                    ErrorHandler(e, true);
                 }
 
                 l_Spinner.Stop("done");
-                Console.Write("Making changes");
+                Console.Write("Looking through workflows");
                 if (!Directory.Exists(l_TempDirPath))
                     Directory.CreateDirectory(l_TempDirPath);
 
@@ -115,7 +110,7 @@ namespace WorkflowVerifyer.App
                     // new parent task for each verification child task
                     Task l_Process = new Task(() =>
                     {
-                        foreach (KeyValuePair<Int32, Queue<DocumentWorkflowItem>> l_ClientWorkflow in l_ClientWorkflows)
+                        foreach (KeyValuePair<Int32, List<DocumentWorkflowItem>> l_ClientWorkflow in l_ClientWorkflows)
                         {
                             if (l_ClientWorkflow.Value.Count == 0)
                                 continue;
@@ -126,11 +121,15 @@ namespace WorkflowVerifyer.App
                             // new task for each verification
                             new Task(() =>
                             {
-                                Verify(l_Verification, l_TempDirPath, l_TotalClients);
-                                if (l_Verification.Processed)
+                                if (Verify(l_Verification, l_TempDirPath, l_TotalClients).Processed)
                                 {
-                                    Interlocked.Add(ref m_VerificationsProcessed, 1);
+                                    Interlocked.Add(ref m_ClientsProcessed, 1);
                                     l_Verification.ItemsModified.ForEach((i) => l_ItemsModified.Enqueue(i));
+
+                                    if (l_Verification.ChangesMade)
+                                    {
+                                        Interlocked.Add(ref m_ClientsWhereChangesMade, 1);
+                                    }
                                 }
                             }, TaskCreationOptions.AttachedToParent).Start();
                         }
@@ -149,20 +148,33 @@ namespace WorkflowVerifyer.App
                     if (l_TimeInterval > 0)
                     {
                         l_TimeIntervalMinusRunTime = l_TimeInterval - l_StopWatch.ElapsedMilliseconds;
-                        l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ?
-                            0 :
-                            l_TimeIntervalMinusRunTime;
+                        l_TimeIntervalMinusRunTime = (l_TimeIntervalMinusRunTime < 0) ? 0 : l_TimeIntervalMinusRunTime;
                         l_ProcessResultsMessage +=
-                            $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}";
+                            $" ... Next run at {DateTime.Now.AddMilliseconds(l_TimeIntervalMinusRunTime).ToLongTimeString()}\n";
                     }
 
                     // log any process results here all together
+                    StringBuilder l_LogString = new StringBuilder();
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    Console.WriteLine($"{l_ItemsModified.Count} items modified for {m_VerificationsProcessed} clients");
-                    foreach (ItemModification l_Mod in l_ItemsModified)
+                    Console.WriteLine($"{l_ItemsModified.Count} item modification(s) for {m_ClientsWhereChangesMade} client(s)");
+
+                    while (l_ItemsModified.Any())
                     {
+                        l_ItemsModified.TryDequeue(out ItemModification l_Mod);
+
+                        // TODO: write to db
+                        if (!l_Mod.WriteToDB())
+                        {
+                            ErrorHandler(new Exception("Could not write modifications to the databasse"), true);
+                        }
+
+                        // write to console
                         Console.WriteLine(l_Mod);
+
+                        // add to log string
+                        l_LogString.Append(l_Mod + "\n");
                     }
+
                     Console.WriteLine(l_ProcessResultsMessage);
 
                     // write log (id, runtime, clients (count), modifications (count), etc) to db
@@ -171,32 +183,47 @@ namespace WorkflowVerifyer.App
                         using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "WorkflowVerification_Add"))
                         {
                             l_cmd.Parameters.AddWithValue("@a_RunTime", l_RunTime);
-                            l_cmd.Parameters.AddWithValue("@a_Summary", $"{l_ItemsModified.Count} items modified for {m_VerificationsProcessed} clients");
+                            l_cmd.Parameters.AddWithValue("@a_Summary", $"{l_ItemsModified.Count} item modification(s) {m_ClientsWhereChangesMade} client(s)");
                             l_conn.Open();
                             l_cmd.ExecuteNonQuery();
                         }
                     }
 
-                    // sleep thread for the fixed time interval
-                    Console.CursorVisible = true;
-                    Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
+                    // if logging to S3, use log string
+                    if (m_LogToS3)
+                    {
+                        String l_AwsS3LogPath = "log" + "/" + DateTime.Now.ToFileTimeUtc();
+
+                        using (VerificationLogger l_Logger = new VerificationLogger(l_AwsS3LogPath, DateTime.Now, l_TempDirPath))
+                        {
+                            //l_Logger.AddEntry("Unknown", false, "Unknown Error Occurred.", (Exception)e.ExceptionObject);
+                            l_Logger.AddEntry("Workflow Verification Processed", true, l_LogString.ToString());
+                            l_Logger.Save();
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
-                    Console.Write(e.Message);
+                    ErrorHandler(e);
                 }
+
+                // sleep thread for the fixed time interval
+                Console.CursorVisible = true;
+                Thread.Sleep(Convert.ToInt32(l_TimeIntervalMinusRunTime));
 
             } while (l_TimeInterval > 0);
         }
         private static WorkflowVerification Verify(WorkflowVerification a_Verification, String a_TempDirPath, Int32 a_TotalClients)
         {
+            a_Verification.Processed = true;
+
             Int32 a_ClientID = a_Verification.ClientID;
-            Queue<DocumentWorkflowItem> a_Workflow = a_Verification.Workflow;
+            List<DocumentWorkflowItem> a_Workflow = a_Verification.Workflow;
             Nullable<DateTime> a_RunTime = a_Verification.RunTime;
-            String l_AwsS3LogPath = "test" + a_ClientID + "/" + DateTime.Now.ToFileTimeUtc();
-            VerificationLogger l_Logger = new VerificationLogger(l_AwsS3LogPath, a_RunTime, a_TempDirPath);
             Stopwatch l_StopWatch = new Stopwatch();
             Int32 l_Percentage = 0;
+
+            Thread.Sleep(a_Verification.ClientID * 10); // this line prevents completions at the same times
 
             // append assignments for this Verification
             l_StopWatch.Start();
@@ -204,47 +231,46 @@ namespace WorkflowVerifyer.App
             l_StopWatch.Stop();
             a_Verification.RunSuccess = true;
             a_Verification.ElapsedTime = l_StopWatch.ElapsedMilliseconds;
-            l_Percentage = ((m_VerificationsProcessed + 1) * 100) / a_TotalClients;
+            l_Percentage = ((m_ClientsProcessed + 1) * 100) / a_TotalClients;
 
             // log to console
-            if (m_VerificationsProcessed != 0)
+            if (m_ClientsProcessed != 0)
+            {
                 Console.SetCursorPosition(0, Console.CursorTop - 2);
+            }
             Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine($"Making changes ({m_VerificationsProcessed + 1}/{a_TotalClients})");
+            Console.WriteLine($"Looking through workflows ({m_ClientsProcessed + 1}/{a_TotalClients})");
             Console.WriteLine(ProgressTracker.ShowProgress(l_Percentage));
 
             return a_Verification;
         }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Console.Write(e.ExceptionObject.ToString());
-
-            if (m_LogToS3)
-            {
-                var l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
-                VerificationLogger l_Logger = new VerificationLogger(DateTime.Today.ToString("yyMMdd"), DateTime.Now, l_TempDirPath);
-                l_Logger.AddEntry("Unknown", false, "Unknown Error Occurred.", (Exception)e.ExceptionObject);
-                l_Logger.Save();
-            }
-
-#if Test
+            ErrorHandler((Exception)e.ExceptionObject);
+#if DEBUG
             Console.ReadKey();
 #endif
             Environment.Exit(1);
         }
-        private static void Test()
-        {
-            DateTime? time = DateTime.Now;
+        private static void ErrorHandler(Exception e, Boolean environmentExit = false)
+        { 
+            Console.WriteLine("////////");
+            Console.WriteLine(e.Message);
+            Console.WriteLine("////////");
 
-            WorkflowVerification test = new WorkflowVerification(36);
-            //test.Workflow = DocumentWorkflowItem.GetLastestForClient(test.ClientID, DateTime.Now.AddHours(-1));
+            if (m_LogToS3)
+            {
+                String l_AwsS3LogPath = "error" + "/" + DateTime.Now.ToFileTimeUtc();
+                String l_TempDirPath = ConfigurationManager.AppSettings["TempFileDirectory"];
 
-            //foreach(DocumentWorkflowItem item in test.Workflow)
-            //{
-            //    Console.WriteLine(item.ToString());
-            //}
-            DocumentWorkflowItem item = new DocumentWorkflowItem(222);
-            Console.WriteLine(item.ToString());
+                using (VerificationLogger l_Logger = new VerificationLogger(l_AwsS3LogPath, DateTime.Now, l_TempDirPath))
+                {
+                    l_Logger.AddEntry("Unknown", false, "Unknown Error Occurred.", e);
+                    l_Logger.Save();
+                }
+            }
+
+            if (environmentExit) Environment.Exit(1);
         }
     }
 }

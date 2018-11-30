@@ -9,7 +9,11 @@ namespace WorkflowVerifyer.App.Helpers
         public static SqlConnection CreateSQLConnection()
         {
             SqlConnection l_conn = new SqlConnection();
+#if DEBUG
             l_conn.ConnectionString = ConfigurationManager.ConnectionStrings["LocalSqlServer"].ToString();
+#elif RELEASE
+            l_conn.ConnectionString = ConfigurationManager.ConnectionStrings["CertusDB"].ToString();
+#endif
             return l_conn;
         }
         public static SqlCommand CreateCommand(SqlConnection a_conn, string a_cmdname)

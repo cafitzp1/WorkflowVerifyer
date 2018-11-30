@@ -5,16 +5,20 @@ using System.IO;
 using Amazon.S3;
 using Amazon.S3.Transfer;
 using Amazon.Runtime.CredentialManagement;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace WorkflowVerifyer.App.Helpers
 {
-    internal class VerificationLogger
+    internal class VerificationLogger : IDisposable
     {
         public static Amazon.RegionEndpoint AwsS3Region { get => Amazon.RegionEndpoint.GetBySystemName(ConfigurationManager.AppSettings["AwsS3Region"]); }
         public string LogString { get; private set; }
         public string AwsFileDir { get; private set; }
         public string LocalFileDir { get; private set; }
         public DateTime? LogDateTime { get; private set; }
+        public Boolean Disposed { get; private set; }
+        SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
 
         /// <summary>
         /// Constructs a VerificationLogger object
@@ -50,13 +54,13 @@ namespace WorkflowVerifyer.App.Helpers
                 // TODO: upload file to 'error' path, not 'logs' - trigger notification on upload to this folder
 
                 SystemErrorLog l_ErrorLog = SystemErrorLog.ReturnErrorLog(a_Exception);
-                a_Message += l_ErrorLog.ErrorDescription;
+                a_Message += " " + l_ErrorLog.ErrorDescription;
             }
 
-            LogString += l_DateTime + " , " + a_Action + " , " + l_Result;
+            LogString += l_DateTime + ", " + a_Action + ", " + l_Result;
 
             if (a_Message.Trim().Length > 0)
-                LogString += " , " + a_Message;
+                LogString += "\n" + a_Message;
 
             LogString += "\r\n";
         }
@@ -114,6 +118,25 @@ namespace WorkflowVerifyer.App.Helpers
 
                 AddEntry("Upload", false, "Error uploading S3 Cloud file - " + a_FileName + ":" + l_ErrorMessage);
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (Disposed)
+                return;
+
+            if (disposing)
+            {
+                handle.Dispose();
+            }
+
+            Disposed = true;
         }
     }
 }

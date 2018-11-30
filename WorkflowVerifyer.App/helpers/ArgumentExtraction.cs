@@ -15,32 +15,32 @@ namespace WorkflowVerifyer.App.Helpers
             Dictionary<String, Object> l_ArgValuePairs = new Dictionary<String, Object>(StringComparer.OrdinalIgnoreCase);
             List<String> UnrecognizedArgs = null;
 
-            l_ArgValuePairs.Add(nameof(ArgumentKey.Unrecognized), UnrecognizedArgs);
-            l_ArgValuePairs.Add(nameof(ArgumentKey.TimeInterval), Convert.ToInt32(ConfigurationManager.AppSettings["TimeInterval"]));
-            l_ArgValuePairs.Add(nameof(ArgumentKey.Client), Convert.ToInt32(ConfigurationManager.AppSettings["Client"]));
-            l_ArgValuePairs.Add(nameof(ArgumentKey.Delay), Convert.ToInt32(ConfigurationManager.AppSettings["Delay"]));
-            l_ArgValuePairs.Add(nameof(ArgumentKey.LogToS3), Convert.ToInt32(ConfigurationManager.AppSettings["LogToS3"]));
+            l_ArgValuePairs.Add("Unrecognized", UnrecognizedArgs);
+            l_ArgValuePairs.Add("TimeInterval", Convert.ToInt32(ConfigurationManager.AppSettings["TimeInterval"]));
+            l_ArgValuePairs.Add("Client", Convert.ToInt32(ConfigurationManager.AppSettings["Client"]));
+            l_ArgValuePairs.Add("Delay", Convert.ToInt32(ConfigurationManager.AppSettings["Delay"]));
+            l_ArgValuePairs.Add("LogToS3", Convert.ToInt32(ConfigurationManager.AppSettings["LogToS3"]));
 
             return l_ArgValuePairs;
         }
         public static Dictionary<String, Object> ExtractArgValuePairs(String[] a_Args)
         {
             Dictionary<String, Object> l_ArgValuePairs = InitializeArguments();
-            l_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] = new List<String>();
+            l_ArgValuePairs["Unrecognized"] = new List<String>();
 
             // extract args
-            for(int i = 0; i < a_Args.Length; i++)
+            for (int i = 0; i < a_Args.Length; i++)
             {
                 KeyValuePair<String, String> l_ExtractedArgValuePair = ExtractArg(a_Args[i]);
 
-                if(l_ArgValuePairs.ContainsKey(l_ExtractedArgValuePair.Key))
+                if (l_ArgValuePairs.ContainsKey(l_ExtractedArgValuePair.Key))
                 {
                     // change value for the arg already in the dictionary
                     l_ArgValuePairs[l_ExtractedArgValuePair.Key] = l_ExtractedArgValuePair.Value;
                 }
                 else // if the key wasn't there, arg was unrecognized; add entire arg to unreconized list of strings
                 {
-                    (l_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] as List<String>).Add(l_ExtractedArgValuePair.Key);
+                    (l_ArgValuePairs["Unrecognized"] as List<String>).Add(l_ExtractedArgValuePair.Key);
                 }
             }
 
@@ -51,14 +51,14 @@ namespace WorkflowVerifyer.App.Helpers
             // extract key from substring before '=' delimitter. If no '=', set entire
             // string to be the key and set object as null (the key will not be recognized, and 
             // will therefore be added to the UnrecognizedArgs list)
-            
+
             String l_Arg = String.Empty;
             String l_Value = String.Empty;
             KeyValuePair<String, String> l_ArgValPair;
             Char l_Delim = '=';
             Int32 l_DelimIndex;
-            
-            if(!a_Arg.Contains(l_Delim))
+
+            if (!a_Arg.Contains(l_Delim))
             {
                 // all args currently require the delimmiter; if not present, return to be added as unrecognized
                 l_Arg = a_Arg;
@@ -69,7 +69,7 @@ namespace WorkflowVerifyer.App.Helpers
             // delimitter is present
             l_DelimIndex = a_Arg.IndexOf(l_Delim);
             l_Arg = a_Arg.Substring(0, l_DelimIndex);
-            l_Value = a_Arg.Substring(l_DelimIndex+1);
+            l_Value = a_Arg.Substring(l_DelimIndex + 1);
             l_ArgValPair = new KeyValuePair<String, String>(l_Arg, l_Value);
 
             return l_ArgValPair;
@@ -77,12 +77,12 @@ namespace WorkflowVerifyer.App.Helpers
         public static void ValidateArgs(Dictionary<String, Object> a_ArgValuePairs)
         {
             // return if there are any unrecognized args
-            List<String> l_UnrecognizedArgsList = (a_ArgValuePairs[nameof(ArgumentKey.Unrecognized)] as List<String>);
-            if (l_UnrecognizedArgsList != null && l_UnrecognizedArgsList.Count>0)
+            List<String> l_UnrecognizedArgsList = (a_ArgValuePairs["Unrecognized"] as List<String>);
+            if (l_UnrecognizedArgsList != null && l_UnrecognizedArgsList.Count > 0)
             {
                 Console.WriteLine($"The following argument(s) provided were invalid:");
 
-                for(int i = 0; i < l_UnrecognizedArgsList.Count; i++)
+                for (int i = 0; i < l_UnrecognizedArgsList.Count; i++)
                 {
                     Console.WriteLine($"\t{l_UnrecognizedArgsList[i]}");
                 }
@@ -91,16 +91,16 @@ namespace WorkflowVerifyer.App.Helpers
             }
 
             // return if any values provided for args are invalid
-            foreach(KeyValuePair<String, Object> entry in a_ArgValuePairs)
+            foreach (KeyValuePair<String, Object> entry in a_ArgValuePairs)
             {
-                if (entry.Key == nameof(ArgumentKey.Unrecognized)) continue;
+                if (entry.Key == "Unrecognized") continue;
 
                 // no longer a list of unrecognized args to worry about; convert item to just <string, string> 
                 KeyValuePair<String, String> l_ArgValuePair = new KeyValuePair<string, string>(entry.Key, entry.Value.ToString());
 
-                if(!ValidateArg(l_ArgValuePair))
+                if (!ValidateArg(l_ArgValuePair))
                 {
-                    if(l_ArgValuePair.Value==String.Empty)
+                    if (l_ArgValuePair.Value == String.Empty)
                     {
                         Console.WriteLine($"Empty value specified for '{l_ArgValuePair.Key}' argument");
                     }
@@ -118,13 +118,13 @@ namespace WorkflowVerifyer.App.Helpers
             // route to method handler
             switch (a_Arg.Key)
             {
-                case nameof(ArgumentKey.TimeInterval):
+                case "TimeInterval":
                     return (ValidateTimeIntervalArg(a_Arg.Value)) ? true : false;
-                case nameof(ArgumentKey.Client):
+                case "Client":
                     return (ValidateClientArg(a_Arg.Value)) ? true : false;
-                case nameof(ArgumentKey.Delay):
+                case "Delay":
                     return (ValidateDelayArg(a_Arg.Value)) ? true : false;
-                case nameof(ArgumentKey.LogToS3):
+                case "LogToS3":
                     return (ValidateLogToS3Arg(a_Arg.Value)) ? true : false;
             }
 
@@ -154,9 +154,9 @@ namespace WorkflowVerifyer.App.Helpers
             List<Int32> l_Clients = new List<Int32>();
             String l_CurrentID = String.Empty;
 
-            for(int i = 0; i < a_ArgValue.Length; i++)
+            for (int i = 0; i < a_ArgValue.Length; i++)
             {
-                if(a_ArgValue[i] != ',')
+                if (a_ArgValue[i] != ',')
                     l_CurrentID += a_ArgValue[i];
 
                 else if (l_CurrentID.Length > 0)
@@ -166,10 +166,10 @@ namespace WorkflowVerifyer.App.Helpers
                 }
             }
 
-            if(l_CurrentID.Length>0)
+            if (l_CurrentID.Length > 0)
                 l_Clients.Add(Convert.ToInt32(l_CurrentID));
 
-            if(l_Clients.Count == 0 || l_Clients[0] == 0)
+            if (l_Clients.Count == 0 || l_Clients[0] == 0)
             {
                 Console.WriteLine($"No client(s) specified");
                 Environment.Exit(1);
@@ -206,7 +206,7 @@ namespace WorkflowVerifyer.App.Helpers
         private static Boolean IsDigitsOnly(String a_ArgValue)
         {
             // no digits should return false
-            if(a_ArgValue.Length==0) return false;
+            if (a_ArgValue.Length == 0) return false;
 
             foreach (char c in a_ArgValue)
             {
@@ -218,11 +218,11 @@ namespace WorkflowVerifyer.App.Helpers
         private static Boolean IsDigitsOrCommasOnly(String a_ArgValue)
         {
             // no digits should return false
-            if(a_ArgValue.Length==0) return false;
+            if (a_ArgValue.Length == 0) return false;
 
             foreach (char c in a_ArgValue)
             {
-                if ((c < '0' || c > '9') && c!=',')
+                if ((c < '0' || c > '9') && c != ',')
                     return false;
             }
             return true;

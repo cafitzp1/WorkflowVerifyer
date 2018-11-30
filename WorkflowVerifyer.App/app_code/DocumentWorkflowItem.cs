@@ -5,39 +5,33 @@ using System.Data.SqlClient;
 using System.Text.RegularExpressions;
 using WorkflowVerifyer.App.Helpers;
 
-/// <summary>
-/// NOT a replication of Certus.Core.DocumentWorkflowItem.
-/// This class is an adaptation which only serves the 
-/// functionailty of this program. Only the data necessary 
-/// for this app's processes has been is included here.
-/// </summary>
 public class DocumentWorkflowItem
 {
-    private Nullable<Int32> DocumentWorkflowItemID { get; set; }
-    private Int32 ClientID { get; set; }
-    private DateTime EmailDate { get; set; }
-    private String EmailToAddress { get; set; }
-    private String EmailCCAddress { get; set; }
-    private String EmailFromAddress { get; set; }
-    private String EmailFromName { get; set; }
-    private String EmailSubject { get; set; }
-    private String EmailBody { get; set; }
-    private String EmailBodySearchText { get; set; }
-    private Nullable<Int32> DocumentationAnalystID { get; set; }
-    private Nullable<Int32> ComplianceAnalystID { get; set; }
-    private Nullable<Int32> CompanyID { get; set; }
-    private Nullable<Int32> CompanyCertificateID { get; set; }
-    private String Notes { get; set; }
-    private Int32 DocumentWorkflowStatusID { get; set; }
-    private Nullable<Int32> DocumentWorkflowUrgencyID { get; set; }
-    private Nullable<DateTime> LastStatusChangeDate { get; set; }
-    private Nullable<DateTime> DateCreated { get; set; }
-    private String FileName { get; set; }
-    private String FileSize { get; set; }
+    public Int32 DocumentWorkflowItemID { get; set; }
+    public Int32 ClientID { get; set; }
+    public DateTime EmailDate { get; set; }
+    public String EmailToAddress { get; set; }
+    public String EmailCCAddress { get; set; }
+    public String EmailFromAddress { get; set; }
+    public String EmailFromName { get; set; }
+    public String EmailSubject { get; set; }
+    public String EmailBody { get; set; }
+    public String EmailBodySearchText { get; set; }
+    public Nullable<Int32> DocumentationAnalystID { get; set; }
+    public Nullable<Int32> ComplianceAnalystID { get; set; }
+    public Nullable<Int32> CompanyID { get; set; }
+    public Nullable<Int32> CompanyCertificateID { get; set; }
+    public String Notes { get; set; }
+    public Int32 DocumentWorkflowStatusID { get; set; }
+    public Nullable<Int32> DocumentWorkflowUrgencyID { get; set; }
+    public Nullable<DateTime> LastStatusChangeDate { get; set; }
+    public Nullable<DateTime> DateCreated { get; set; }
+    public String FileName { get; set; }
+    public String FileSize { get; set; }
 
     public DocumentWorkflowItem()
     {
-        DocumentWorkflowItemID = new Nullable<Int32>();
+        DocumentWorkflowItemID = -1;
         ClientID = 0;
         EmailDate = DateTime.MinValue;
         EmailToAddress = "";
@@ -103,9 +97,9 @@ public class DocumentWorkflowItem
             }
         }
     }
-    public static Queue<DocumentWorkflowItem> GetLastestForClient(Int32 a_ClientID, DateTime a_LastRunTime)
+    public static List<DocumentWorkflowItem> GetLastestForClient(Int32 a_ClientID, DateTime a_LastRunTime)
     {
-        Queue<DocumentWorkflowItem> l_queue = new Queue<DocumentWorkflowItem>();
+        List<DocumentWorkflowItem> l_queue = new List<DocumentWorkflowItem>();
         DataTable l_results = new DataTable();
         using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
         {
@@ -120,16 +114,12 @@ public class DocumentWorkflowItem
                     {
                         DocumentWorkflowItem l_tmp = new DocumentWorkflowItem();
 
-                        l_tmp.DocumentWorkflowItemID = Convert.ToInt32(l_rdr["DocumentWorkflowItem"]);
+                        l_tmp.DocumentWorkflowItemID = Convert.ToInt32(l_rdr["DocumentWorkflowItemID"]);
                         l_tmp.ClientID = Convert.ToInt32(l_rdr["ClientID"]);
                         l_tmp.EmailDate = Convert.ToDateTime(l_rdr["EmailDate"]);
                         l_tmp.EmailToAddress = l_rdr["EmailToAddress"].ToString();
-                        l_tmp.EmailCCAddress = l_rdr["EmailCCAddress"].ToString();
                         l_tmp.EmailFromAddress = l_rdr["EmailFromAddress"].ToString();
-                        l_tmp.EmailFromName = l_rdr["EmailFromName"].ToString();
                         l_tmp.EmailSubject = l_rdr["EmailSubject"].ToString();
-                        l_tmp.EmailBody = l_rdr["EmailBody"].ToString();
-                        l_tmp.EmailBodySearchText = l_rdr["EmailBodySearchText"].ToString();
                         if (!l_rdr.IsDBNull(l_rdr.GetOrdinal("DocumentationAnalystID")))
                             l_tmp.DocumentationAnalystID = Convert.ToInt32(l_rdr["DocumentationAnalystID"]);
                         if (!l_rdr.IsDBNull(l_rdr.GetOrdinal("ComplianceAnalystID")))
@@ -140,13 +130,10 @@ public class DocumentWorkflowItem
                             l_tmp.CompanyCertificateID = Convert.ToInt32(l_rdr["CompanyCertificateID"]);
                         l_tmp.Notes = l_rdr["Notes"].ToString();
                         l_tmp.DocumentWorkflowStatusID = Convert.ToInt32(l_rdr["DocumentWorkflowStatusID"]);
-                        if (!l_rdr.IsDBNull(l_rdr.GetOrdinal("DocumentWorkflowUrgencyID")))
-                            l_tmp.DocumentWorkflowUrgencyID = Convert.ToInt32(l_rdr["DocumentWorkflowUrgencyID"]);
-                        l_tmp.LastStatusChangeDate = Convert.ToDateTime(l_rdr["LastStatusChangeDate"]);
                         l_tmp.FileName = l_rdr["FileName"].ToString();
                         l_tmp.FileSize = l_rdr["FileSize"].ToString();
 
-                        l_queue.Enqueue(l_tmp);
+                        l_queue.Add(l_tmp);
                     }
                 }
             }
@@ -172,62 +159,33 @@ public class DocumentWorkflowItem
         }
         return l_results;
     }
-    public void Save()
-    {
-        throw new Exception("Method functionaility may not yet be compatible with this program");
-
-        /* Need to make sure only the necessary fields are being modified.
-         * Might need some overloaded method signatures to handle the different
-         * item modifications.
-         * */
-
-        using (SqlConnection l_conn = DBHelp.CreateSQLConnection())
-        {
-            using (SqlCommand l_cmd = DBHelp.CreateCommand(l_conn, "DocumentWorkflowIteSave"))
-            {
-                if (DocumentWorkflowItemID.HasValue)
-                    l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowItemID", DocumentWorkflowItemID.Value);
-                l_cmd.Parameters.AddWithValue("@a_ClientID", ClientID);
-                l_cmd.Parameters.AddWithValue("@a_EmailDate", EmailDate);
-                l_cmd.Parameters.AddWithValue("@a_EmailToAddress", EmailToAddress);
-                if (EmailCCAddress.Length > 0)
-                    l_cmd.Parameters.AddWithValue("@a_EmailCCAddress", EmailCCAddress);
-                l_cmd.Parameters.AddWithValue("@a_EmailFromAddress", EmailFromAddress);
-                if (EmailFromName.Length > 0)
-                    l_cmd.Parameters.AddWithValue("@a_EmailFromName", EmailFromName);
-                l_cmd.Parameters.AddWithValue("@a_EmailSubject", EmailSubject);
-                l_cmd.Parameters.AddWithValue("@a_EmailBody", EmailBody);
-                l_cmd.Parameters.AddWithValue("@a_EmailBodySearchText", EmailBodySearchText);
-                if (DocumentationAnalystID.HasValue)
-                    l_cmd.Parameters.AddWithValue("@a_DocumentationAnalystID", DocumentationAnalystID);
-                if (ComplianceAnalystID.HasValue)
-                    l_cmd.Parameters.AddWithValue("@a_ComplianceAnalystID", ComplianceAnalystID);
-                if (CompanyID.HasValue)
-                    l_cmd.Parameters.AddWithValue("@a_CompanyID", CompanyID);
-                if (CompanyCertificateID.HasValue)
-                    l_cmd.Parameters.AddWithValue("@a_CompanyCertificateID", CompanyCertificateID);
-                if (Notes.Length > 0)
-                    l_cmd.Parameters.AddWithValue("@a_Notes", Notes);
-                l_cmd.Parameters.AddWithValue("@a_LastStatusChangeDate", LastStatusChangeDate);
-                l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowStatusID", DocumentWorkflowStatusID);
-                if (DocumentWorkflowUrgencyID.HasValue)
-                    l_cmd.Parameters.AddWithValue("@a_DocumentWorkflowUrgencyID", DocumentWorkflowUrgencyID);
-                l_conn.Open();
-                DocumentWorkflowItemID = Convert.ToInt32(l_cmd.ExecuteScalar());
-            }
-        }
-    }
     public override String ToString()
     {
-        Regex checkLength = new Regex(@"^.{18}", RegexOptions.Compiled);
+        const Int32 MAX_LEN = 18;
 
-        return DocumentWorkflowItemID.ToString().PadLeft(10) +
-        ClientID.ToString().PadLeft(5) +
-        EmailDate.ToString("MM/dd/y hh:mm tt").PadLeft(18) +
-        checkLength.Replace(EmailFromAddress, String.Empty).PadLeft(20) +
-        checkLength.Replace(EmailSubject, String.Empty).PadLeft(20) +
-        checkLength.Replace(FileName, String.Empty).PadLeft(20) +
-        checkLength.Replace(FileSize, String.Empty).PadLeft(20);
+        String l_DocID = DocumentWorkflowItemID.ToString();
+        String l_ClientID = ClientID.ToString();
+        String l_EmailDate = EmailDate.ToString("MM/dd/y hh:mm tt");
+        String l_EmailFrom = !String.IsNullOrWhiteSpace(EmailFromAddress) && EmailFromAddress.Length >= MAX_LEN ?
+            EmailFromAddress.Substring(0, MAX_LEN) :
+            EmailFromAddress;
+        String l_EmailSubject = !String.IsNullOrWhiteSpace(EmailSubject) && EmailSubject.Length >= MAX_LEN ?
+            EmailSubject.Substring(0, MAX_LEN) :
+            EmailSubject;
+        String l_FileName = !String.IsNullOrWhiteSpace(FileName) && FileName.Length >= MAX_LEN ?
+            FileName.Substring(0, MAX_LEN) :
+            FileName;
+        String l_FileSize = !String.IsNullOrWhiteSpace(FileSize) && FileSize.Length >= MAX_LEN ?
+           FileSize.Substring(0, MAX_LEN) :
+           FileSize;
+
+        return l_DocID.PadLeft(8) +
+            l_ClientID.PadLeft(5) +
+            l_EmailDate.PadLeft(MAX_LEN + 2) +
+            l_EmailFrom.PadLeft(MAX_LEN + 2) +
+            l_EmailSubject.PadLeft(MAX_LEN + 2) +
+            l_FileName.PadLeft(MAX_LEN + 2) +
+            l_FileSize.PadLeft(MAX_LEN / 2);
     }
 }
 
