@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WorkflowVerifyer.App": {
+      "commandName": "Project",
+      "commandLineArgs": "Client=7,10,36,100 LogToS3=1"
+    }
+  }
+}
